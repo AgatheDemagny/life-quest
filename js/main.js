@@ -92,4 +92,23 @@ createWorldBtn.onclick = () => {
 // ================== INIT ==================
 renderWorlds();
 
+// ================== RESET APP ==================
+const resetBtn = document.getElementById("resetAppBtn");
+
+if (resetBtn) {
+  resetBtn.onclick = () => {
+    if (confirm("Tout effacer ? (mondes, XP, tout)")) {
+      localStorage.removeItem("joueMaVie");
+
+      // IMPORTANT pour la PWA
+      if ("caches" in window) {
+        caches.keys().then(keys => {
+          keys.forEach(key => caches.delete(key));
+        });
+      }
+
+      location.reload();
+    }
+  };
+}
 
