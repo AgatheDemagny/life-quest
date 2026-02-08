@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("appVersion").textContent = "V2 - 08/02/2026";
+  document.getElementById("appVersion").textContent = "V1 - 08/02/2026";
 });
 
 // ================== Storage helpers ==================
@@ -887,39 +887,12 @@ btn.onclick = async () => {
 }
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.ready.then(async () => {
-    swReg = await navigator.serviceWorker.getRegistration();
-    if (!swReg) return;
-
-    // si déjà une update en attente
-    if (swReg.waiting) {
-      showUpdateToast();
-    }
-
-    // si une update arrive
-    swReg.addEventListener("updatefound", () => {
-      const newSW = swReg.installing;
-      if (!newSW) return;
-
-      newSW.addEventListener("statechange", () => {
-        if (newSW.state === "installed") {
-          // si on est déjà contrôlé, alors c'est une vraie MAJ dispo => toast
-          if (navigator.serviceWorker.controller) {
-            showUpdateToast();
-          }
-        }
-      });
-    });
-
-    // check update à l'ouverture (dev-friendly)
-    try { await swReg.update(); } catch(e) {}
-  });
-
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    document.getElementById("updateToast")?.classList.add("hidden");
+    // une nouvelle version vient de prendre le contrôle → on recharge automatiquement
     window.location.reload();
   });
 }
+
 
 const forceUpdateBtn = document.getElementById("forceUpdateBtn");
 forceUpdateBtn?.addEventListener("click", () => forceUpdate());
