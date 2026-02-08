@@ -865,10 +865,15 @@ function showUpdateToast() {
 
   toast.classList.remove("hidden");
 
-  btn.onclick = async () => {
-    const reg = await navigator.serviceWorker.getRegistration();
-    if (!reg || !reg.waiting) return;
-    reg.waiting.postMessage({ type: "SKIP_WAITING" });
+btn.onclick = async () => {
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (!reg || !reg.waiting) return;
+
+  // Cache le toast tout de suite (UX)
+  toast.classList.add("hidden");
+
+  // Demande l'activation de la nouvelle version
+  reg.waiting.postMessage({ type: "SKIP_WAITING" });
   };
 }
 
@@ -902,6 +907,7 @@ if ("serviceWorker" in navigator) {
 
   // Quand le nouveau SW prend le contrôle, on recharge
   navigator.serviceWorker.addEventListener("controllerchange", () => {
+    document.getElementById("updateToast")?.classList.add("hidden");
     window.location.reload();
   });
 }

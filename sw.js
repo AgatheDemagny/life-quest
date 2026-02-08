@@ -31,9 +31,30 @@ self.addEventListener("message", (event) => {
   }
 });
 
-self.addEventListener("fetch", event => {
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+
+  // 1) Pour la navigation (index.html / page principale) : Network-first
+  // => récupère la dernière version si dispo, sinon fallback cache
+  if (req.mode === "navigate") {
+    event.respondWith((async () => {
+      try {
+        const fresh = await fetch(req);
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(req, fresh.clone());
+        return fresh;
+      } catch (e) {
+        const cached = await caches.match(req);
+        return cached || caches.match("./index.html");
+      }
+    })());
+    return;
+  }
+
+  // 2) Pour les assets (css/js/icons) : Cache-first
   event.respondWith(
-    caches.match(event.request).then(resp => resp || fetch(event.request))
+    caches.match(req).then(resp => resp || fetch(req))
   );
 });
+
 
