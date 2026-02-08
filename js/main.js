@@ -451,56 +451,42 @@ function renderObjectives() {
       xp = obj.xp;
       canValidate = !obj.done;
       if (obj.done) label.style.textDecoration = "line-through";
-    } else if (obj.type === "milestone") {
+        } else if (obj.type === "milestone") {
       const steps = obj.steps || [];
-
-      // Dernier palier validé (le plus grand "done")
       const doneSteps = steps.filter(s => s.done);
       const lastDone = doneSteps.length ? doneSteps[doneSteps.length - 1] : null;
-
-      // Prochain palier à faire (premier non done)
       const next = steps.find(s => !s.done) || null;
 
-      // On va afficher 1 ou 2 lignes : dernier validé + prochain
-      // On crée le rendu "à la main" en dessous (au lieu d'une seule ligne)
-      const container = document.createElement("div");
-      container.style.display = "flex";
-      container.style.flexDirection = "column";
-      container.style.gap = "6px";
-
-      if (lastDone) {
-        const lineDone = document.createElement("div");
-        lineDone.style.opacity = "0.75";
-        lineDone.style.textDecoration = "line-through";
-        lineDone.innerText = `${obj.prefix} ${lastDone.count} ${obj.suffix} ✅`;
-        container.appendChild(lineDone);
-      }
-
-      if (next) {
-        const lineNext = document.createElement("div");
-        lineNext.innerText = `${obj.prefix} ${next.count} ${obj.suffix}`;
-        container.appendChild(lineNext);
-
-        title = ""; // on ne met pas de title sur la ligne principale
-        xp = next.xp;
-        canValidate = true;
-
-        // On remplace le label par notre container
-        label.innerText = "";
-        label.appendChild(container);
-
+      if (!next && !lastDone) {
+        // cas bizarre: pas de steps
+        label.innerText = "(objectif palier vide)";
         badge.innerText = "📈";
-      } else {
-        // tout est terminé
-        label.innerText = `${obj.prefix} (terminé) ${obj.suffix}`;
+        canValidate = false;
+        xp = 0;
+      } else if (!next && lastDone) {
+        // terminé
+        label.innerText = `${obj.prefix} ${lastDone.count} ${obj.suffix} ✅`;
         badge.innerText = "✅";
         canValidate = false;
+        xp = 0;
         label.style.textDecoration = "line-through";
+      } else {
+        // actif (prochain palier)
+        const lastDoneHtml = lastDone
+          ? `<div style="opacity:.65;text-decoration:line-through;">${obj.prefix} ${lastDone.count} ${obj.suffix} ✅</div>`
+          : "";
+        const nextHtml = `<div><strong>${obj.prefix} ${next.count} ${obj.suffix}</strong></div>`;
+
+        label.innerHTML = `${lastDoneHtml}${nextHtml}`;
+        badge.innerText = "📈";
+        canValidate = true;
+        xp = next.xp;
       }
     }
 
-
+    if (obj.type !== "milestone") {
     label.innerText = title;
+    }
 
     const btn = document.createElement("button");
     btn.innerText = canValidate ? `${xp} XP` : "✓";
