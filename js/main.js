@@ -864,9 +864,11 @@ function showUpdateToast() {
   toast.classList.remove("hidden");
 
   btn.onclick = () => {
-    if (waitingSW) {
-      waitingSW.postMessage({ type: "SKIP_WAITING" });
-    }
+  if (!waitingSW) return;
+
+  // Envoie les deux formats pour être sûr à 100%
+  waitingSW.postMessage("SKIP_WAITING");
+  waitingSW.postMessage({ type: "SKIP_WAITING" });
   };
 }
 

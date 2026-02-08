@@ -30,8 +30,20 @@ self.addEventListener("fetch", event => {
   );
 });
 
+// ✅ Accepte les deux formats de message
 self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
+  const data = event.data;
+
+  const shouldSkip =
+    data === "SKIP_WAITING" ||
+    (data && typeof data === "object" && data.type === "SKIP_WAITING");
+
+  if (shouldSkip) {
     self.skipWaiting();
   }
+});
+
+// ✅ Après activation, prendre le contrôle de la page
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
 });
