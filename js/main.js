@@ -58,6 +58,9 @@ function defaultData() {
   };
 }
 
+let settingsReturnTo = "home"; // "home" ou "world"
+
+
 function load() {
   const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
   const data = raw && typeof raw === "object" ? raw : defaultData();
@@ -132,6 +135,7 @@ const cancelWorldBtn = el("cancelWorldBtn");
 // world page
 const backHomeBtn = el("backHomeBtn");
 const worldHeaderTitle = el("worldHeaderTitle");
+const entriesListEl = el("entriesList");
 
 const worldLevelEl = el("worldLevel");
 const worldWeekXpEl = el("worldWeekXp");
@@ -371,6 +375,7 @@ function renderWorlds() {
 function renderWorldScreen() {
   const w = state.worlds[state.activeWorldId];
   if (!w) return;
+  renderEntries();
 
   worldHeaderTitle.innerText = `${w.icon} ${w.name}`;
 
@@ -509,6 +514,96 @@ function renderObjectives() {
   });
 }
 
+function formatDateTime(ts) {
+  const d = new Date(ts);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function canDeleteEntry(entry) {
+  const ageMs = Date.now() - entry.createdAt;
+  return ageMs <= 24 * 60 * 60 * 1000; // 24h
+}
+
+function renderEntries() {
+  const w = state.worlds[state.activeWorldId];
+  if (!w || !entriesListEl) return;
+
+  if (!Array.isArray(w.entries)) w.entries = [];
+  entriesListEl.innerHTML = "";
+
+  if (w.entries.length === 0) {
+    entriesListEl.innerHTML = `<p class="hint">Aucune saisie pour l’instant.</p>`;
+    return;
+  }
+
+  w.entries.forEach((entry) => {
+    const row = document.createElement("div");
+    row.className = "objective-row"; // réutilise ton style flex
+
+    const label = document.createElement("div");
+    label.className = "label";
+    label.innerHTML = `<strong>${formatDateTime(entry.createdAt)}</strong><br><span class="hint">Temps saisi : ${entry.minutes} min • +${entry.xp} XP</span>`;
+
+    const del = document.createElement("button");
+    del.className = "ghost";
+    del.textContent = "✕";
+
+    const allowed = canDeleteEntry(entry);
+    del.disabled = !allowed;
+    if (!allowed) {
+      del.style.opacity = "0.5";
+      del.title = "Suppression possible uniquement dans les 24h";
+    }
+
+    del.onclick = () => deleteEntry(entry.id);
+
+    row.appendChild(label);
+    row.appendChild(del);
+    entriesListEl.appendChild(row);
+  });
+}
+
+function deleteEntry(entryId) {
+  const w = state.worlds[state.activeWorldId];
+  if (!w || !Array.isArray(w.entries)) return;
+
+  const entry = w.entries.find(e => e.id === entryId);
+  if (!entry) return;
+
+  if (!canDeleteEntry(entry)) {
+    alert("Tu ne peux supprimer une saisie qu’à moins de 24h.");
+    return;
+  }
+
+  const ok = confirm(`Supprimer cette saisie (${entry.minutes} min, -${entry.xp} XP) ?`);
+  if (!ok) return;
+
+  // Retirer l'entry
+  w.entries = w.entries.filter(e => e.id !== entryId);
+
+  // Retirer le temps
+  w.stats.timeTotal = Math.max(0, (w.stats.timeTotal || 0) - entry.minutes);
+
+  // Retirer les XP : monde + global + périodes
+  w.stats.totalXp = Math.max(0, (w.stats.totalXp || 0) - entry.xp);
+  w.stats.weekXp = Math.max(0, (w.stats.weekXp || 0) - entry.xp);
+  w.stats.monthXp = Math.max(0, (w.stats.monthXp || 0) - entry.xp);
+
+  state.global.totalXp = Math.max(0, (state.global.totalXp || 0) - entry.xp);
+  state.global.weekXp = Math.max(0, (state.global.weekXp || 0) - entry.xp);
+  state.global.monthXp = Math.max(0, (state.global.monthXp || 0) - entry.xp);
+
+  save();
+
+  showPopup(`🗑️ Saisie supprimée (-${entry.xp} XP)`);
+
+  // Refresh UI
+  renderHomeStats();
+  renderWorldStats();
+  renderEntries();
+}
+
 // ================== Navigation ==================
 function openWorld(worldId) {
   state.activeWorldId = worldId;
@@ -520,6 +615,9 @@ function openWorld(worldId) {
 function goHome() {
   showScreen(homeScreen);
   renderHome();
+  state.activeWorldId = null;
+  save();
+
 }
 
 // ================== Modals ==================
@@ -578,12 +676,12 @@ startBtn.onclick = () => {
 // back buttons
 backHomeBtn.onclick = () => goHome();
 openSettingsBtn.onclick = () => {
-  showScreen(settingsScreen);
-  renderSettings();
+    settingsReturnTo = "home";
+    showScreen(settingsScreen);
+    renderSettings();
 };
 backFromSettingsBtn.onclick = () => {
-  // return to previous screen
-  if (state.activeWorldId) {
+  if (settingsReturnTo === "world" && state.activeWorldId) {
     showScreen(worldScreen);
     renderWorldScreen();
   } else {
@@ -609,11 +707,22 @@ validateTimeBtn.onclick = () => {
 
   const xp = calculateTimeXp(w, minutes);
 
+  // --- create entry (historique) ---
+  if (!Array.isArray(w.entries)) w.entries = [];
+  const entry = {
+    id: "entry-" + Date.now(),
+    createdAt: Date.now(),
+    minutes,
+    xp
+  };
+  w.entries.unshift(entry); // ✅ plus récent en premier
+
   // apply time
   w.stats.timeTotal = (w.stats.timeTotal || 0) + minutes;
   save();
 
   addXp(w.id, xp, "⏱️ Temps validé !");
+
   timeMinutesInput.value = "";
   timePreviewEl.innerText = "";
 };
