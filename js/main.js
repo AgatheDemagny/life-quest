@@ -805,3 +805,16 @@ resetGameBtn.onclick = () => {
 
 // ================== Init ==================
 renderOnboardingOrHome();
+
+// === PATCH: fermeture du modal "Créer un monde" (inratable) ===
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("addWorldModal");
+  const cancelBtn = document.getElementById("cancelWorldBtn");
+
+  if (cancelBtn && modal) {
+    cancelBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      modal.classList.add("hidden");
+    });
+  }
+});
