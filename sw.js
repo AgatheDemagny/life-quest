@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v1"
+const CACHE_VERSION = "v2"
 const CACHE_NAME = `joue-ma-vie-${CACHE_VERSION}`;
 const FILES_TO_CACHE = [
   "./",
@@ -23,6 +23,12 @@ self.addEventListener("activate", event => {
     )
   );
   self.clients.claim();
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", event => {

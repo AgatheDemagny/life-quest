@@ -526,7 +526,7 @@ createWorldBtn.onclick = () => {
 
   save();
   renderWorlds();
-  ForceCloseAddWorldModal();
+  forceCloseAddWorldModal();
 };
 
 // onboarding
@@ -863,10 +863,10 @@ function showUpdateToast() {
 
   toast.classList.remove("hidden");
 
-  btn.onclick = () => {
-    if (waitingSW) {
-      waitingSW.postMessage({ type: "SKIP_WAITING" });
-    }
+  btn.onclick = async () => {
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg || !reg.waiting) return;
+    reg.waiting.postMessage({ type: "SKIP_WAITING" });
   };
 }
 
