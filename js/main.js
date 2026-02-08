@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("appVersion").textContent = "V2 - 08/02/2026";
+  document.getElementById("appVersion").textContent = "V1 - 08/02/2026";
 });
 
 // ================== Storage helpers ==================
@@ -855,8 +855,8 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// ================== PWA UPDATE TOAST ==================
-let waitingSW = null;
+// ================== PWA UPDATE TOAST (ROBUSTE ANDROID) ==================
+let swReg = null;
 
 function showUpdateToast() {
   const toast = document.getElementById("updateToast");
@@ -865,48 +865,51 @@ function showUpdateToast() {
 
   toast.classList.remove("hidden");
 
-  btn.onclick = () => {
-    // ✅ On utilise l'instance "waiting" capturée (la bonne)
-    if (!waitingSW) return;
-
-    // UX : masquer tout de suite
+  btn.onclick = async () => {
+    // masque tout de suite
     toast.classList.add("hidden");
 
-    // Demande au SW d'activer la nouvelle version
-    waitingSW.postMessage({ type: "SKIP_WAITING" });
+    // force un check update
+    try { await swReg?.update(); } catch(e) {}
 
-    // fallback : si iOS ne déclenche pas controllerchange, on reload quand même
-    setTimeout(() => {
-      window.location.reload();
-    }, 1200);
+    // si un SW est en attente, on le force à s'activer
+    if (swReg?.waiting) {
+      swReg.waiting.postMessage({ type: "SKIP_WAITING" });
+    }
+
+    // ANDROID: reload obligatoire pour que la nouvelle version prenne le contrôle
+    // (même si controllerchange tarde ou ne vient pas)
+    setTimeout(() => window.location.reload(), 300);
   };
 }
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.getRegistration().then((reg) => {
-    if (!reg) return;
+  navigator.serviceWorker.ready.then(async () => {
+    swReg = await navigator.serviceWorker.getRegistration();
+    if (!swReg) return;
 
     // si déjà une update en attente
-    if (reg.waiting) {
-      waitingSW = reg.waiting;
+    if (swReg.waiting) {
       showUpdateToast();
     }
 
-    reg.addEventListener("updatefound", () => {
-      const newSW = reg.installing;
+    // si une update arrive
+    swReg.addEventListener("updatefound", () => {
+      const newSW = swReg.installing;
       if (!newSW) return;
 
       newSW.addEventListener("statechange", () => {
-        if (newSW.state === "installed" && navigator.serviceWorker.controller) {
-          // ✅ IMPORTANT : reg.waiting est LA référence stable une fois installée
-          waitingSW = reg.waiting;
-          if (waitingSW) showUpdateToast();
+        if (newSW.state === "installed") {
+          // si on est déjà contrôlé, alors c'est une vraie MAJ dispo => toast
+          if (navigator.serviceWorker.controller) {
+            showUpdateToast();
+          }
         }
       });
     });
 
-    // check update à chaque ouverture (ok en dev)
-    reg.update();
+    // check update à l'ouverture (dev-friendly)
+    try { await swReg.update(); } catch(e) {}
   });
 
   navigator.serviceWorker.addEventListener("controllerchange", () => {
