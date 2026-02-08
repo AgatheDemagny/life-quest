@@ -1,0 +1,20 @@
+{
+  "name": "Joue ma Vie",
+  "short_name": "JMV",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#FFEAF6",
+  "theme_color": "#FFC0CB",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
