@@ -1,15 +1,19 @@
 /* ================== PALETTE ET TYPO ================== */
 :root {
-  --bg-main: #FFEAF4;        /* fond rosé clair */
-  --bg-card: #FFDDF0;        /* cartes plus pâles */
-  --btn-active: #FFB3D9;     /* boutons actifs */
-  --text-main: #2E1F3B;      /* texte principal */
-  --accent: #FF85C1;         /* accent pour barres et détails */
-  --progress-start: #FF85C1; 
-  --progress-end: #FF4D9E;
+  --bg-main: #C49D83;        /* fond principal */
+  --bg-card: #9E8277;        /* cartes */
+  --text-main: #80586D;      /* texte principal */
+
+  --accent: #9F5540;         /* boutons / actions */
+  --accent-soft: #80586D;    /* hover / actif */
+
+  --progress-bg: rgba(255,255,255,0.35);
+  --progress-fill: #9F5540;
+
+  --danger: #7A3E2F;
 }
 
-button, .time-input, #newQuestName, #newQuestXp {
+button, .time-input {
   font-size: 16px;
   padding: 12px;
 }
@@ -22,7 +26,7 @@ button, .time-input, #newQuestName, #newQuestXp {
 }
 
 body {
-  font-family: 'Poppins', sans-serif; /* police moderne et lisible */
+  font-family: 'Poppins', sans-serif;
   background: var(--bg-main);
   color: var(--text-main);
 }
@@ -44,18 +48,34 @@ h1, h2, h3 {
 button {
   cursor: pointer;
   border: none;
-  border-radius: 12px;
-  padding: 10px;
-  margin: 4px 0;
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin: 6px 0;
   font-weight: 600;
-  background: var(--bg-card);
-  color: var(--text-main);
-  box-shadow: 2px 2px 6px rgba(0,0,0,0.15);
-  transition: 0.2s;
-}
-button:hover {
-  background: var(--btn-active);
+  background: var(--accent);
   color: #fff;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+  transition: transform 0.12s ease, filter 0.12s ease, background 0.12s ease;
+}
+
+button:hover {
+  background: var(--accent-soft);
+}
+
+button:active {
+  transform: translateY(1px);
+  filter: brightness(0.98);
+}
+
+/* boutons "ghost" (secondaires) */
+.ghost{
+  background: rgba(255,255,255,0.55);
+  color: var(--text-main);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+.ghost:hover{
+  background: rgba(255,255,255,0.75);
+  color: var(--text-main);
 }
 
 /* ================== GRID MONDES ================== */
@@ -65,88 +85,102 @@ button:hover {
   gap: 10px;
   margin-bottom: 15px;
 }
+
 .world-btn {
   padding: 12px;
-  border-radius: 14px;
-  background: var(--bg-card);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.35);
   text-align: center;
   color: var(--text-main);
-  font-weight: 600;
-  box-shadow: 2px 2px 6px rgba(0,0,0,0.15);
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.14);
 }
+
+.world-btn:hover {
+  background: rgba(255,255,255,0.5);
+}
+
 .world-btn.active { 
-  background: var(--btn-active); 
-  color: #fff; 
+  background: var(--accent-soft);
+  color: #fff;
 }
 
 /* ================== INPUTS ================== */
 input, select {
   width: 100%;
-  padding: 10px;
+  padding: 10px 12px;
   margin-top: 6px;
-  border-radius: 8px;
+  border-radius: 12px;
   border: none;
   font-size: 14px;
-  box-shadow: 1px 1px 3px rgba(0,0,0,0.15);
+  background: rgba(255,255,255,0.55);
+  color: var(--text-main);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+  outline: none;
+}
+
+input:focus, select:focus {
+  box-shadow: 0 0 0 3px rgba(159, 85, 64, 0.25), 0 8px 18px rgba(0,0,0,0.12);
+}
+
+::placeholder {
+  color: rgba(128, 88, 109, 0.7);
 }
 
 /* ================== CARDS ================== */
 .card {
-  background: var(--bg-card);
-  border-radius: 16px;
-  padding: 12px;
-  margin: 8px 0;
-  box-shadow: 3px 3px 10px rgba(0,0,0,0.12);
-  transition: 0.2s;
+  background: rgba(255,255,255,0.25);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 18px;
+  padding: 14px;
+  margin: 10px 0;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.14);
+  transition: transform 0.12s ease;
 }
+
 .card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+}
+
+.card.subtle{
+  background: rgba(255,255,255,0.35);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
 }
 
 /* ================== BARRES DE PROGRESSION ================== */
 .progress-bar { 
-  background: #FFD0E6; 
-  border-radius: 12px; 
+  background: var(--progress-bg);
+  border-radius: 999px; 
   overflow: hidden; 
   height: 22px; 
-  margin-top: 6px; 
+  margin-top: 8px; 
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.12);
 }
+
 .progress-fill {
   height: 100%;
-  background: linear-gradient(to right, var(--progress-start), var(--progress-end));
+  background: var(--progress-fill);
   width: 0%;
   text-align: center;
   line-height: 22px;
-  font-weight: 600;
+  font-weight: 700;
   color: #fff;
-  transition: width 0.3s;
-  border-radius: 12px;
+  transition: width 0.35s ease;
 }
 
 /* ================== SECTIONS ================== */
 .hidden { display: none; }
+
 .list-item, .quest-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-top: 6px;
 }
+
 .quest-item.done span {
   text-decoration: line-through;
-  opacity: 0.6;
-}
-
-/* ================== FORMULAIRE AJOUT QUETE ================== */
-#addQuestForm {
-  margin-top: 10px; 
-  display: flex; 
-  gap: 6px;
-}
-#addQuestForm input {
-  flex: 1;
-}
-#addQuestForm button {
-  flex: 0.5;
+  opacity: 0.65;
 }
 
 /* ================== POPUP ================== */
@@ -158,33 +192,20 @@ input, select {
   background: var(--accent);
   color: #fff;
   padding: 12px 18px;
-  border-radius: 12px;
-  font-weight: 600;
-  box-shadow: 2px 2px 10px rgba(0,0,0,0.25);
+  border-radius: 14px;
+  font-weight: 700;
+  box-shadow: 0 12px 26px rgba(0,0,0,0.22);
   display: none;
-  z-index: 1000;
-  animation: popupShow 0.5s ease forwards;
+  z-index: 2000;
+  animation: popupShow 0.35s ease forwards;
 }
 
 @keyframes popupShow {
-  0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  0% { opacity: 0; transform: translateX(-50%) translateY(16px); }
   100% { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-/* ================== RESPONSIVE MOBILE ================== */
-@media (max-width: 420px) {
-  .worlds-grid {
-    grid-template-columns: 1fr;
-  }
-  .card {
-    padding: 10px;
-  }
-  input, select, button {
-    font-size: 16px;
-    padding: 10px;
-  }
-}
-
+/* ================== UPDATE TOAST (si tu l'as encore) ================== */
 #updateToast {
   position: fixed;
   bottom: 20px;
@@ -197,23 +218,23 @@ input, select {
   display: flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-  z-index: 2000;
-  animation: popupShow 0.4s ease;
+  box-shadow: 0 12px 26px rgba(0,0,0,0.22);
+  z-index: 2500;
+  animation: popupShow 0.35s ease;
 }
 
 #updateToast button {
-  background: white;
+  background: rgba(255,255,255,0.9);
   color: var(--accent);
-  font-weight: 700;
+  font-weight: 800;
   border-radius: 10px;
-  padding: 6px 10px;
+  padding: 8px 10px;
+  box-shadow: none;
 }
 
 #updateToast.hidden {
   display: none;
 }
-
 
 /* ================== TOPBAR + TABS ================== */
 .topbar{
@@ -223,6 +244,7 @@ input, select {
   gap:10px;
   margin-bottom:10px;
 }
+
 .icon-btn{
   width:42px;
   height:42px;
@@ -230,21 +252,35 @@ input, select {
   align-items:center;
   justify-content:center;
   border-radius:14px;
-  background: var(--bg-card);
+  background: rgba(255,255,255,0.45);
+  color: var(--text-main);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
 }
+
 .tabs{
   display:flex;
   gap:8px;
   margin:10px 0 12px;
 }
+
 .tab-btn{
   flex:1;
   border-radius:14px;
+  padding: 10px 10px;
+  background: rgba(255,255,255,0.35);
+  color: var(--text-main);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.10);
 }
+
+.tab-btn:hover{
+  background: rgba(255,255,255,0.5);
+}
+
 .tab-btn.active{
-  background: var(--btn-active);
+  background: var(--accent-soft);
   color:#fff;
 }
+
 .tab-panel{}
 
 /* segmented */
@@ -253,15 +289,23 @@ input, select {
   gap:6px;
   margin:8px 0 10px;
 }
+
 .segmented button{
   flex:1;
+  background: rgba(255,255,255,0.35);
+  color: var(--text-main);
 }
+
+.segmented button:hover{
+  background: rgba(255,255,255,0.5);
+}
+
 .segmented button.active{
-  background: var(--btn-active);
+  background: var(--accent-soft);
   color:#fff;
 }
 
-/* modal */
+/* ================== MODAL ================== */
 .modal{
   position:fixed;
   inset:0;
@@ -272,38 +316,40 @@ input, select {
   padding:16px;
   z-index:1500;
 }
+
 .modal-content{
   width:100%;
   max-width:420px;
 }
+
 .inline{
   display:flex;
   align-items:center;
   gap:8px;
 }
+
 .inline input{ flex:1; }
+
 .actions{
   display:flex;
   gap:8px;
-  margin-top:10px;
+  margin-top:12px;
 }
+
 .actions button{ flex:1; }
-.ghost{
-  background: rgba(255,255,255,0.6);
-}
+
 .hint{
   font-size: 13px;
-  opacity:0.8;
+  opacity:0.85;
   margin-top:8px;
 }
+
+/* settings grid */
 .grid-3{
   display:grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap:8px;
   margin:6px 0 10px;
-}
-@media (max-width: 420px){
-  .grid-3{ grid-template-columns: 1fr; }
 }
 
 /* objectives */
@@ -312,38 +358,62 @@ input, select {
   align-items:center;
   justify-content:space-between;
   gap:8px;
-  margin-top:8px;
+  margin-top:10px;
 }
+
 .objective-row .label{
   flex:1;
+  font-weight: 600;
 }
+
 .badge{
   font-size:12px;
   padding:4px 8px;
   border-radius:999px;
   background: rgba(255,255,255,0.6);
+  color: var(--text-main);
 }
-.card.subtle{
-  background: rgba(255,255,255,0.45);
-}
+
 .steps-preview{
   margin-top:8px;
   display:flex;
   flex-wrap:wrap;
   gap:6px;
 }
+
 .step-pill{
   font-size:12px;
   padding:4px 8px;
   border-radius:999px;
   background: rgba(255,255,255,0.7);
+  color: var(--text-main);
 }
 
 /* danger */
 .card.danger{
-  border: 2px solid rgba(255,77,158,0.35);
+  border: 2px solid rgba(122, 62, 47, 0.35);
 }
+
 .danger-btn{
-  background: #ff4d9e;
+  background: var(--danger);
   color:#fff;
+}
+
+.danger-btn:hover{
+  background: #5f2f24;
+}
+
+/* ================== RESPONSIVE MOBILE ================== */
+@media (max-width: 420px) {
+  .worlds-grid {
+    grid-template-columns: 1fr;
+  }
+  .card {
+    padding: 12px;
+  }
+  input, select, button {
+    font-size: 16px;
+    padding: 10px;
+  }
+  .grid-3{ grid-template-columns: 1fr; }
 }
