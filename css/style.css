@@ -242,14 +242,6 @@ input:focus, select:focus {
 }
 
 /* ================== TOPBAR + TABS ================== */
-.topbar{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  margin-bottom:10px;
-}
-
 .icon-btn{
   width:42px;
   height:42px;
@@ -432,3 +424,27 @@ input:focus, select:focus {
   .grid-3{ grid-template-columns: 1fr; }
 }
 
+.topbar{
+  position: relative;
+  display: block;         /* important : évite le "côte à côte" */
+  text-align: center;
+}
+
+#openSettingsBtn.icon-btn{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+
+  /* look bouton discret */
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 999px;
+  padding: 8px 10px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+#openSettingsBtn.icon-btn:active{
+  transform: scale(0.96);
+}
