@@ -174,11 +174,12 @@ input:focus, select:focus {
 }
 
 .app-banner {
-  width: 100%;
-  max-width: 600px;
+  width: 85%;
+  max-width: 420px;
+  height: auto;
   display: block;
-  margin: 0 auto 20px auto;
-  border-radius: 12px;
+  margin: 10px auto 25px auto;
+  border-radius: 16px;
 }
 
 /* ================== BARRES DE PROGRESSION ================== */
