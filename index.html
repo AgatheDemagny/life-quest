@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <meta name="theme-color" content="#0B0B0F">
+  <meta name="theme-color" content="#80586D">
 </head>
 <body>
   <div class="game">
@@ -228,6 +228,23 @@
     <div id="popup"></div>
 
   </div>
+
+  <!-- Firebase Core -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCQKK5pD8_h_Pg1-48spGBGzxZm1fgiHzs",
+      authDomain: "joue-ma-vie.firebaseapp.com",
+      projectId: "joue-ma-vie",
+      storageBucket: "joue-ma-vie.firebasestorage.app",
+      messagingSenderId: "351248369885",
+      appId: "1:351248369885:web:7a2191fab089c60304b334"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+  </script>
 
   <script src="js/main.js"></script>
   <script>
