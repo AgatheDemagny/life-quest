@@ -269,6 +269,69 @@ function showPopup(text) {
   }, 1600);
 }
 
+// ===== Custom Dialog (remplace alert/confirm) =====
+function openDialog({ title = "Info", message = "", okText = "OK", cancelText = "Annuler", showCancel = true } = {}) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("dialogModal");
+    const t = document.getElementById("dialogTitle");
+    const m = document.getElementById("dialogMessage");
+    const ok = document.getElementById("dialogOkBtn");
+    const cancel = document.getElementById("dialogCancelBtn");
+
+    if (!modal || !t || !m || !ok || !cancel) {
+      // fallback sécurité
+      resolve(showCancel ? confirm(message) : (alert(message), true));
+      return;
+    }
+
+    t.textContent = title;
+    m.textContent = message;
+    ok.textContent = okText;
+    cancel.textContent = cancelText;
+    cancel.classList.toggle("hidden", !showCancel);
+
+    function close(result){
+      ok.removeEventListener("click", onOk);
+      cancel.removeEventListener("click", onCancel);
+      modal.removeEventListener("click", onBackdrop);
+      document.removeEventListener("keydown", onKey);
+      modal.classList.add("hidden");
+      modal.style.display = "none";
+      modal.setAttribute("aria-hidden", "true");
+      resolve(result);
+    }
+
+    function onOk(){ close(true); }
+    function onCancel(){ close(false); }
+    function onBackdrop(e){
+      // clique hors carte = annuler
+      if (e.target === modal) close(false);
+    }
+    function onKey(e){
+      if (e.key === "Escape") close(false);
+      if (e.key === "Enter") close(true);
+    }
+
+    ok.addEventListener("click", onOk);
+    cancel.addEventListener("click", onCancel);
+    modal.addEventListener("click", onBackdrop);
+    document.addEventListener("keydown", onKey);
+
+    modal.classList.remove("hidden");
+    modal.style.display = "flex";
+    modal.setAttribute("aria-hidden", "false");
+  });
+}
+
+function uiConfirm(message, title = "Confirmation") {
+  return openDialog({ title, message, okText: "Confirmer", cancelText: "Annuler", showCancel: true });
+}
+
+function uiAlert(message, title = "Info") {
+  return openDialog({ title, message, okText: "OK", showCancel: false });
+}
+
+
 function clamp01(x){ return Math.max(0, Math.min(1, x)); }
 
 function getGlobalTotalMinutes() {
@@ -435,14 +498,13 @@ function renderHomeStats() {
   const buttons = weekLoadPicker.querySelectorAll("button");
   buttons.forEach(b => {
     b.classList.toggle("active", b.dataset.load === state.settings.weekLoad);
-    b.onclick = () => {
+    b.onclick = async () => {
       const nextLoad = b.dataset.load;
       const current = state.settings.weekLoad;
-
       if (nextLoad === current) return;
 
       const label = nextLoad === "busy" ? "chargée" : nextLoad === "normal" ? "normale" : "légère";
-      const ok = confirm(`Confirmer semaine ${label} ?`);
+      const ok = await uiConfirm(`Confirmer semaine ${label} ?`, "Objectif hebdo");
       if (!ok) return;
 
       state.settings.weekLoad = nextLoad;
@@ -1162,7 +1224,7 @@ if ("serviceWorker" in navigator) {
       await auth.createUserWithEmailAndPassword(email, pass);
       showPopup("✅ Compte créé");
     } catch (e) {
-      alert(e.message);
+      await uiAlert(e.message, "Connexion");
     }
   }
 
@@ -1174,7 +1236,7 @@ if ("serviceWorker" in navigator) {
       await auth.signInWithEmailAndPassword(email, pass);
       showPopup("✅ Connectée");
     } catch (e) {
-      alert(e.message);
+      await uiAlert(e.message, "Connexion");
     }
   }
 
@@ -1183,7 +1245,7 @@ if ("serviceWorker" in navigator) {
       await auth.signOut();
       showPopup("👋 Déconnectée");
     } catch (e) {
-      alert(e.message);
+      await uiAlert(e.message, "Connexion");
     }
   }
 

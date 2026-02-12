@@ -499,3 +499,44 @@ input:focus, select:focus {
 #openSettingsBtn.icon-btn:active{
   transform: scale(0.96);
 }
+
+/* ===== Dialog (alert/confirm custom) ===== */
+.dialog-card{
+  position: relative;
+  overflow: hidden;
+}
+
+.dialog-card::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  background: linear-gradient(120deg,
+    rgba(255, 90, 160, 0.35),
+    rgba(120, 80, 255, 0.35),
+    rgba(255, 90, 160, 0.25)
+  );
+  filter: blur(18px);
+  opacity: .75;
+  pointer-events:none;
+}
+
+.dialog-card > *{
+  position: relative;
+  z-index: 1;
+}
+
+.dialog-message{
+  margin-top: 10px;
+  margin-bottom: 6px;
+  color: rgba(255,255,255,0.86);
+  line-height: 1.35;
+}
+
+/* petit “shake” si tu veux plus tard pour erreurs */
+@keyframes dialogPop {
+  from { transform: translateY(14px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+#dialogModal .modal-content{
+  animation: dialogPop 0.18s ease-out;
+}
