@@ -1,6 +1,6 @@
 {
-  "name": "Joue ma Vie",
-  "short_name": "Joue ma Vie",
+  "name": "Life Quest",
+  "short_name": "Life Quest",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#0B0B0F",
