@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("appVersion").textContent = "V1 - 08/02/2026";
+  document.getElementById("appVersion").textContent = "V1 - 12/02/2026";
 });
 
 // ================== Storage helpers ==================
@@ -995,3 +995,77 @@ if ("serviceWorker" in navigator) {
     window.location.reload();
   });
 }
+
+// ================== FIREBASE AUTH (Email/MDP) ==================
+(function setupFirebaseAuth(){
+  // éléments UI
+  const authStatus = document.getElementById("authStatus");
+  const authEmail = document.getElementById("authEmail");
+  const authPassword = document.getElementById("authPassword");
+  const btnLogin = document.getElementById("btnLogin");
+  const btnSignup = document.getElementById("btnSignup");
+  const btnLogout = document.getElementById("btnLogout");
+
+  // sécurité: si firebase n'est pas chargé, on ne casse pas l'app
+  if (!window.firebase || !firebase.auth) {
+    console.warn("Firebase Auth non chargé (scripts manquants ou cache).");
+    if (authStatus) authStatus.textContent = "Firebase non chargé (attends la MAJ)";
+    return;
+  }
+
+  const auth = firebase.auth();
+
+  function setLoggedOutUI() {
+    if (authStatus) authStatus.textContent = "Non connectée";
+    btnLogout?.classList.add("hidden");
+  }
+
+  function setLoggedInUI(user) {
+    if (authStatus) authStatus.textContent = `Connectée : ${user.email}`;
+    btnLogout?.classList.remove("hidden");
+  }
+
+  async function signup() {
+    const email = (authEmail?.value || "").trim();
+    const pass = (authPassword?.value || "").trim();
+    if (!email || !pass) return alert("Email et mot de passe requis");
+    try {
+      await auth.createUserWithEmailAndPassword(email, pass);
+      showPopup("✅ Compte créé");
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+
+  async function login() {
+    const email = (authEmail?.value || "").trim();
+    const pass = (authPassword?.value || "").trim();
+    if (!email || !pass) return alert("Email et mot de passe requis");
+    try {
+      await auth.signInWithEmailAndPassword(email, pass);
+      showPopup("✅ Connectée");
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+
+  async function logout() {
+    try {
+      await auth.signOut();
+      showPopup("👋 Déconnectée");
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+
+  // events
+  btnLogin && (btnLogin.onclick = login);
+  btnSignup && (btnSignup.onclick = signup);
+  btnLogout && (btnLogout.onclick = logout);
+
+  // état session
+  auth.onAuthStateChanged((user) => {
+    if (user) setLoggedInUI(user);
+    else setLoggedOutUI();
+  });
+})();

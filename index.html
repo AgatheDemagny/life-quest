@@ -185,6 +185,28 @@
     <!-- SETTINGS -->
     <section id="settingsScreen" class="hidden">
       <header class="topbar">
+        <div class="card">
+          <h3>Compte</h3>
+          <p class="hint" id="authStatus">Non connectée</p>
+
+          <label>Email</label>
+          <input id="authEmail" type="email" placeholder="ex : moi@email.com" autocomplete="email" />
+
+          <label>Mot de passe</label>
+          <input id="authPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
+
+          <div class="actions">
+            <button id="btnLogin">Se connecter</button>
+            <button id="btnSignup" class="ghost" type="button">Créer un compte</button>
+          </div>
+
+          <div class="actions">
+            <button id="btnLogout" class="ghost hidden" type="button">Se déconnecter</button>
+          </div>
+
+          <p class="hint">La sauvegarde cloud arrive juste après (prochaine étape).</p>
+        </div>
+
         <button id="backFromSettingsBtn" class="icon-btn" aria-label="Retour">←</button>
         <h2>⚙️ Paramètres</h2>
         <div style="width:40px;"></div>
