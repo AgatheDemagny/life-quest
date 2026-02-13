@@ -1295,24 +1295,34 @@ if ("serviceWorker" in navigator) {
     btnLogout?.classList.remove("hidden");
   }
 
-  function renderAccountSection() {
-  const user = auth.currentUser;
-
+function renderAccountSection(user) {
   const loggedOut = document.getElementById("accountLoggedOut");
   const loggedIn = document.getElementById("accountLoggedIn");
+
+  const pseudoEl = document.getElementById("accountPseudo");
+  const emailEl = document.getElementById("accountEmail");
+
+  if (!loggedOut || !loggedIn) {
+    console.warn("Compte UI introuvable: vérifie accountLoggedOut/accountLoggedIn");
+    return;
+  }
 
   if (user) {
     loggedOut.classList.add("hidden");
     loggedIn.classList.remove("hidden");
 
-    document.getElementById("accountEmail").textContent = user.email;
-    document.getElementById("accountPseudo").textContent =
-      localStorage.getItem("playerName") || "Joueuse";
+    if (emailEl) emailEl.textContent = user.email || "";
+    if (pseudoEl) pseudoEl.textContent = state?.playerName || localStorage.getItem("playerName") || "Joueuse";
+
+    if (authStatus) authStatus.textContent = `Connectée : ${user.email}`;
   } else {
     loggedOut.classList.remove("hidden");
     loggedIn.classList.add("hidden");
+
+    if (authStatus) authStatus.textContent = "Non connectée";
   }
 }
+
 
   async function signup() {
     const email = (authEmail?.value || "").trim();
@@ -1379,12 +1389,13 @@ if ("serviceWorker" in navigator) {
   }
 
   auth.onAuthStateChanged((user) => {
+    // état des boutons (si tu veux garder tes fonctions)
     if (user) setLoggedInUI(user);
     else setLoggedOutUI();
 
-    renderAccountSection();
+    // rendu fiable des sections compte
+    renderAccountSection(user);
   });
-
 
 // ================== FIRESTORE CLOUD SAVE ==================
 let cloudAuthUser = null;
