@@ -133,6 +133,9 @@ const homeScreen = el("homeScreen");
 const worldScreen = el("worldScreen");
 const settingsScreen = el("settingsScreen");
 
+// connexion
+const loginScreen = el("loginScreen");
+
 // onboarding
 const playerNameInput = el("playerNameInput");
 const startBtn = el("startBtn");
@@ -247,7 +250,7 @@ function forceOpenAddWorldModal() {
 
 // ================== UI helpers ==================
 function showScreen(which) {
-  [onboardingScreen, homeScreen, worldScreen, settingsScreen, performanceScreen]
+  [loginScreen, onboardingScreen, homeScreen, worldScreen, settingsScreen, performanceScreen]
     .forEach(s => s.classList.add("hidden"));
   which.classList.remove("hidden");
 }
@@ -468,13 +471,24 @@ function addXp(worldId, xp, reasonText) {
 }
 
 // ================== Rendering ==================
-function renderOnboardingOrHome() {
+function renderAfterAuth() {
+  const user = (window.firebase && firebase.auth) ? firebase.auth().currentUser : null;
+
+  // Pas connectée => écran login
+  if (!user) {
+    showScreen(loginScreen);
+    return;
+  }
+
+  // Connectée => pseudo obligatoire
   if (!state.playerName) {
     showScreen(onboardingScreen);
-  } else {
-    showScreen(homeScreen);
-    renderHome();
+    return;
   }
+
+  // Connectée + pseudo => home
+  showScreen(homeScreen);
+  renderHome();
 }
 
 function renderHome() {
@@ -890,7 +904,7 @@ startBtn.onclick = async () => {
   if (!name) return uiAlert("Entre un pseudo", "Bienvenue");
   state.playerName = name;
   save();
-  renderOnboardingOrHome();
+  renderAfterAuth();
 };
 
 // back buttons
@@ -1218,15 +1232,32 @@ saveGoalsBtn.onclick = () => {
 };
 
 resetGameBtn.onclick = async () => {
+  const user = (window.firebase && firebase.auth) ? firebase.auth().currentUser : null;
+  if (!user) return uiAlert("Tu dois être connectée pour réinitialiser le jeu.", "Réinitialisation");
+
   const ok1 = await uiConfirm("Es-tu sûre de vouloir supprimer toutes les données ?", "Réinitialisation");
   if (!ok1) return;
 
   const ok2 = await uiConfirm("Dernière confirmation : tout sera perdu. Continuer ?", "Réinitialisation");
   if (!ok2) return;
 
-  localStorage.removeItem(STORAGE_KEY);
-  location.reload();
+  // 1) reset local
+  state = defaultData();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+  // 2) reset cloud (supprime la sauvegarde)
+  try {
+    const db = firebase.firestore();
+    await db.collection("users").doc(user.uid).collection("app").doc("save").delete();
+  } catch (e) {
+    console.error(e);
+    showPopup("⚠️ Reset cloud impossible");
+  }
+
+  showPopup("🧹 Jeu réinitialisé");
+  renderAfterAuth(); // => onboarding (pseudo)
 };
+
 
 // ================== Tab init (home/world) ==================
 (function initTabs() {
@@ -1235,7 +1266,7 @@ resetGameBtn.onclick = async () => {
 })();
 
 // ================== Init ==================
-renderOnboardingOrHome();
+renderAfterAuth();
 
 // === PATCH: fermeture du modal "Créer un monde" (inratable) ===
 document.addEventListener("DOMContentLoaded", () => {
@@ -1268,69 +1299,39 @@ if ("serviceWorker" in navigator) {
 
 // ================== FIREBASE AUTH (Email/MDP) ==================
 (function setupFirebaseAuth(){
-  // éléments UI
+  // UI (écran login)
   const authStatus = document.getElementById("authStatus");
   const authEmail = document.getElementById("authEmail");
   const authPassword = document.getElementById("authPassword");
   const btnLogin = document.getElementById("btnLogin");
   const btnSignup = document.getElementById("btnSignup");
-  const btnLogout = document.getElementById("btnLogout");
 
-  // sécurité: si firebase n'est pas chargé, on ne casse pas l'app
+  // UI (paramètres)
+  const btnLogout = document.getElementById("btnLogout");
+  const accountEmailLine = document.getElementById("accountEmailLine"); // optionnel
+
   if (!window.firebase || !firebase.auth) {
-    console.warn("Firebase Auth non chargé (scripts manquants ou cache).");
-    if (authStatus) authStatus.textContent = "Firebase non chargé (attends la MAJ)";
+    console.warn("Firebase Auth non chargé.");
+    if (authStatus) authStatus.textContent = "Firebase non chargé";
     return;
   }
 
   const auth = firebase.auth();
 
-  function setLoggedOutUI() {
-    if (authStatus) authStatus.textContent = "Non connectée";
-    btnLogout?.classList.add("hidden");
-  }
-
-  function setLoggedInUI(user) {
-    if (authStatus) authStatus.textContent = `Connectée : ${user.email}`;
-    btnLogout?.classList.remove("hidden");
-  }
-
-function renderAccountSection(user) {
-  const loggedOut = document.getElementById("accountLoggedOut");
-  const loggedIn = document.getElementById("accountLoggedIn");
-
-  const pseudoEl = document.getElementById("accountPseudo");
-  const emailEl = document.getElementById("accountEmail");
-
-  if (!loggedOut || !loggedIn) {
-    console.warn("Compte UI introuvable: vérifie accountLoggedOut/accountLoggedIn");
-    return;
-  }
-
-  if (user) {
-    loggedOut.classList.add("hidden");
-    loggedIn.classList.remove("hidden");
-
-    if (emailEl) emailEl.textContent = user.email || "";
-    if (pseudoEl) pseudoEl.textContent = state?.playerName || localStorage.getItem("playerName") || "Joueuse";
-
-    if (authStatus) authStatus.textContent = `Connectée : ${user.email}`;
-  } else {
-    loggedOut.classList.remove("hidden");
-    loggedIn.classList.add("hidden");
-
-    if (authStatus) authStatus.textContent = "Non connectée";
-  }
-}
-
-
   async function signup() {
     const email = (authEmail?.value || "").trim();
     const pass = (authPassword?.value || "").trim();
     if (!email || !pass) return uiAlert("Email et mot de passe requis", "Connexion");
+
     try {
       await auth.createUserWithEmailAndPassword(email, pass);
+
+      // ✅ nouveau compte => nouveau départ local
+      state = defaultData();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
       showPopup("✅ Compte créé");
+      renderAfterAuth(); // => onboarding (pseudo)
     } catch (e) {
       await uiAlert(e.message, "Connexion");
     }
@@ -1340,9 +1341,11 @@ function renderAccountSection(user) {
     const email = (authEmail?.value || "").trim();
     const pass = (authPassword?.value || "").trim();
     if (!email || !pass) return uiAlert("Email et mot de passe requis", "Connexion");
+
     try {
       await auth.signInWithEmailAndPassword(email, pass);
       showPopup("✅ Connectée");
+      // l'affichage + sync se fait dans onAuthStateChanged
     } catch (e) {
       await uiAlert(e.message, "Connexion");
     }
@@ -1352,25 +1355,39 @@ function renderAccountSection(user) {
     try {
       await auth.signOut();
       showPopup("👋 Déconnectée");
+      // onAuthStateChanged -> retour loginScreen
     } catch (e) {
       await uiAlert(e.message, "Connexion");
     }
   }
 
   // events
-  btnLogin && (btnLogin.onclick = login);
-  btnSignup && (btnSignup.onclick = signup);
-  btnLogout && (btnLogout.onclick = logout);
+  if (btnLogin) btnLogin.onclick = login;
+  if (btnSignup) btnSignup.onclick = signup;
+  if (btnLogout) btnLogout.onclick = logout;
 
-  auth.onAuthStateChanged((user) => {
-    // état des boutons (si tu veux garder tes fonctions)
-    if (user) setLoggedInUI(user);
-    else setLoggedOutUI();
+  // ✅ UN SEUL onAuthStateChanged (source de vérité)
+  auth.onAuthStateChanged(async (user) => {
+    cloudAuthUser = user || null;
 
-    // rendu fiable des sections compte
-    renderAccountSection(user);
+    if (authStatus) authStatus.textContent = user ? `Connectée : ${user.email}` : "Non connectée";
+    if (accountEmailLine) accountEmailLine.textContent = user ? `Connectée : ${user.email}` : "";
+
+    if (!user) {
+      renderAfterAuth(); // => loginScreen
+      return;
+    }
+
+    // Connectée -> sync cloud puis affichage
+    try {
+      await pullCloudAndMerge();
+    } catch (e) {
+      console.error(e);
+      showPopup("⚠️ Sync cloud impossible");
+    }
+
+    renderAfterAuth();
   });
-
 })();
 
 // ================== FIRESTORE CLOUD SAVE ==================
@@ -1443,29 +1460,10 @@ async function pullCloudAndMerge() {
     state = cloudState;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     showPopup("☁️ Données récupérées");
-    renderOnboardingOrHome();
+    renderAfterAuth();
   } else {
     // local plus récent -> push
     await pushCloudSave();
     showPopup("☁️ Données synchronisées");
   }
 }
-
-// Brancher sur l'état de connexion Firebase
-(function hookCloudToAuth(){
-  if (!window.firebase || !firebase.auth) return;
-
-  firebase.auth().onAuthStateChanged(async (user) => {
-    cloudAuthUser = user || null;
-
-    if (cloudAuthUser) {
-      // au login : on récupère/synchronise
-      try {
-        await pullCloudAndMerge();
-      } catch (e) {
-        console.error(e);
-        showPopup("⚠️ Sync cloud impossible");
-      }
-    }
-  });
-})();

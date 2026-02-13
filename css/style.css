@@ -608,3 +608,8 @@ button {
 .section-spacing {
   margin-top: 20px;
 }
+
+input + label {
+  margin-top: 16px;
+  display: block;
+}

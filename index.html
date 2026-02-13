@@ -14,6 +14,23 @@
 <body>
   <div class="game">
 
+    <!-- LOGIN -->
+     <div id="loginScreen" class="hidden">
+      <div class="card">
+        <h2>Connexion</h2>
+
+        <input type="email" id="authEmail" placeholder="Email">
+        <input type="password" id="authPassword" placeholder="Mot de passe">
+
+        <div class="actions">
+          <button id="btnLogin" class="ghost">Se connecter</button>
+          <button id="btnSignup" class="ghost">Créer un compte</button>
+        </div>
+
+        <p class="hint" id="authStatus">Non connectée</p>
+      </div>
+    </div>
+
     <!-- ONBOARDING : pseudo -->
     <section id="onboardingScreen" class="hidden">
       <img src="icons/banner-1080-420.png" alt="Life Quest" class="app-banner">
@@ -231,31 +248,11 @@
         <div style="width:40px;"></div>
       </header>
 
-        <div class="card">
-          <h3>Compte</h3>
-
-          <!-- UTILISATEUR NON CONNECTÉ -->
-          <div id="accountLoggedOut">
-            <input type="email" id="authEmail" placeholder="Email">
-            <input type="password" id="authPassword" placeholder="Mot de passe">
-
-            <div class="actions">
-              <button id="btnLogin" class="ghost">Se connecter</button>
-              <button id="btnSignup" class="ghost">Créer un compte</button>
-            </div>
-          </div>
-
-          <!-- UTILISATEUR CONNECTÉ -->
-          <div id="accountLoggedIn" class="hidden">
-            <p><strong>Pseudo :</strong> <span id="accountPseudo"></span></p>
-            <p><strong>Email :</strong> <span id="accountEmail"></span></p>
-
-            <button id="btnLogout" class="danger-btn btn-block">
-              Se déconnecter
-            </button>
-          </div>
-        </div>
-
+      <div class="card">
+        <h3>Compte</h3>
+        <p class="hint" id="accountEmailLine"></p>
+        <button id="btnLogout" class="danger-btn">Se déconnecter</button>
+      </div>
 
       <div class="card">
         <h3>Objectifs</h3>
