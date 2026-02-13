@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("appVersion").textContent = "V1 - 12/02/2026";
+  document.getElementById("appVersion").textContent = "V1 - 13/02/2026";
 });
 
 // ================== Storage helpers ==================

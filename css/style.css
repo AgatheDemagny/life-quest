@@ -68,6 +68,10 @@ h1, h2, h3 {
   font-weight: 700;
 }
 
+h1 {font-size: 26px;}
+h2 {font-size: 20px;}
+h3 {font-size: 17px;}
+
 /* ================== BOUTONS ================== */
 button {
   cursor: pointer;
@@ -178,8 +182,8 @@ input:focus, select:focus {
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 22px;
-  padding: 16px;
-  margin: 12px 0;
+  padding: 18px;
+  margin: 16px 0;
   box-shadow: 0 18px 40px rgba(0,0,0,0.28);
   transition: transform 0.12s ease;
 }
@@ -199,7 +203,7 @@ input:focus, select:focus {
   display:flex;
   justify-content: space-between;
   gap: 10px;
-  padding: 10px 2px;
+  padding: 12px 0;
   margin: 0;
   border-bottom: 1px solid var(--divider);
 }
@@ -259,7 +263,7 @@ input:focus, select:focus {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 6px;
+  margin-top: 10px;
 }
 
 .quest-item.done span {
@@ -434,8 +438,8 @@ button.icon-btn {
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:8px;
-  margin-top:10px;
+  gap:10px;
+  margin-top:14px;
 }
 
 .objective-row .label{
@@ -584,4 +588,23 @@ label, .label, .hint {
 
 .card strong {
   font-weight: 800;
+}
+
+p,
+label,
+span,
+input,
+select,
+button {
+  font-size: 15px;
+}
+
+.hint {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Espacement vertical standard entre sections */
+.section-spacing {
+  margin-top: 20px;
 }
