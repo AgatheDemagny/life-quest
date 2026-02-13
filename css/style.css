@@ -264,26 +264,33 @@ input:focus, select:focus {
 /* ================== POPUP ================== */
 #popup {
   position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  transform: none;
+
   background: rgba(159,85,64,0.95);
   color: #fff;
-  padding: 12px 18px;
-  border-radius: 14px;
+  padding: 14px 18px;
+  border-radius: 18px 18px 0 0;
   font-weight: 800;
-  box-shadow: 0 14px 30px rgba(0,0,0,0.35);
+
+  box-shadow: 0 -14px 30px rgba(0,0,0,0.35);
   display: none;
   z-index: 2000;
   animation: popupShow 0.35s ease forwards;
 }
 
 @keyframes popupShow {
-  0% { opacity: 0; transform: translateX(-50%) translateY(16px); }
-  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 /* ================== TOPBAR + TABS ================== */
+button.icon-btn {
+  width: 42px;
+}
+
 .icon-btn{
   width:42px;
   height:42px;
@@ -366,13 +373,13 @@ input:focus, select:focus {
   display:flex;
   align-items:flex-end;
   justify-content:center;
-  padding:16px;
+  padding:0;
   z-index:1500;
 }
 
 .modal-content{
   width:100%;
-  max-width:420px;
+  max-width: none;
 }
 
 .modal-content.card{
@@ -395,6 +402,12 @@ input:focus, select:focus {
 }
 
 .actions button{ flex:1; }
+
+/* Exceptions : boutons sur une même ligne */
+.actions button {
+  width: auto;
+  flex: 1;
+}
 
 .hint{
   font-size: 13px;
