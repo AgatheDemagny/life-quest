@@ -128,6 +128,7 @@ let state = load();
 // ================== DOM ==================
 const el = (id) => document.getElementById(id);
 
+const loadingScreen = el("loadingScreen");
 const onboardingScreen = el("onboardingScreen");
 const homeScreen = el("homeScreen");
 const worldScreen = el("worldScreen");
@@ -251,7 +252,7 @@ function forceOpenAddWorldModal() {
 
 // ================== UI helpers ==================
 function showScreen(which) {
-  [loginScreen, onboardingScreen, homeScreen, worldScreen, settingsScreen, performanceScreen]
+  [loadingScreen, loginScreen, onboardingScreen, homeScreen, worldScreen, settingsScreen, performanceScreen]
     .filter(Boolean)
     .forEach(s => s.classList.add("hidden"));
   which.classList.remove("hidden");
@@ -1310,7 +1311,7 @@ if (resetGameBtn) resetGameBtn.onclick = async () => {
 })();
 
 // ================== Init ==================
-renderAfterAuth();
+showScreen(loadingScreen);
 
 // === PATCH: fermeture du modal "Créer un monde" (inratable) ===
 document.addEventListener("DOMContentLoaded", () => {
