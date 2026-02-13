@@ -146,7 +146,6 @@ const openPerformanceBtn = el("openPerformanceBtn");
 const playerNameEl = el("playerName");
 const globalLevelEl = el("globalLevel");
 const globalXpEl = el("globalXp");
-const globalTimeHoursEl = el("globalTimeHours");
 
 const weekLoadPicker = el("weekLoadPicker");
 const weekXpEl = el("weekXp");
@@ -230,6 +229,12 @@ const popupEl = el("popup");
 
 // quick world settings (future)
 const worldQuickSettingsBtn = el("worldQuickSettingsBtn");
+
+function showLoading(on){
+  const l = document.getElementById("loadingScreen");
+  if (!l) return;
+  l.classList.toggle("hidden", !on);
+}
 
 function forceCloseAddWorldModal() {
   const modal = document.getElementById("addWorldModal");
@@ -560,8 +565,12 @@ function renderHomeStats() {
   playerNameEl.innerText = state.playerName || "";
   globalXpEl.innerText = state.global.totalXp ?? 0;
   globalLevelEl.innerText = levelFromXp(state.global.totalXp ?? 0, state.settings.levelBase, state.settings.levelGrowth);
-  const totalHours = getGlobalTotalMinutes() / 60;
-  globalTimeHoursEl.innerText = (Math.round(totalHours * 10) / 10).toString(); // 1 décimale
+  const totalMin = getGlobalTotalMinutes();
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  const pretty = `${String(h).padStart(2,"0")}h${String(m).padStart(2,"0")}mn`;
+  const globalTimePrettyEl = document.getElementById("globalTimePretty");
+  if (globalTimePrettyEl) globalTimePrettyEl.textContent = pretty;
 
   // week load buttons
   const buttons = weekLoadPicker.querySelectorAll("button");
@@ -1414,28 +1423,32 @@ let cloudSaveTimer = null;
   if (btnLogout) btnLogout.onclick = logout;
 
   // ✅ UN SEUL onAuthStateChanged (source de vérité)
-  auth.onAuthStateChanged(async (user) => {
-    cloudAuthUser = user || null;
+auth.onAuthStateChanged(async (user) => {
+  showLoading(true);
 
-    if (authStatus) authStatus.textContent = user ? `Connectée : ${user.email}` : "Non connectée";
-    if (accountEmailLine) accountEmailLine.textContent = user ? `Connectée : ${user.email}` : "";
+  cloudAuthUser = user || null;
 
-    if (!user) {
-      renderAfterAuth(); // => loginScreen
-      return;
-    }
+  if (authStatus) authStatus.textContent = user ? `Connectée : ${user.email}` : "Non connectée";
+  if (accountEmailLine) accountEmailLine.textContent = user ? `Connectée : ${user.email}` : "";
 
-    // Connectée -> sync cloud puis affichage
-    try {
-      await pullCloudAndMerge();
-    } catch (e) {
-      console.error(e);
-      showPopup("⚠️ Sync cloud impossible");
-    }
+  // Pas connectée -> écran login
+  if (!user) {
+    renderAfterAuth();      // => loginScreen
+    showLoading(false);     // ✅ IMPORTANT
+    return;
+  }
 
-    renderAfterAuth();
-  });
-})();
+  // Connectée -> sync cloud puis affichage
+  try {
+    await pullCloudAndMerge();
+  } catch (e) {
+    console.error(e);
+    showPopup("⚠️ Sync cloud impossible");
+  }
+
+  renderAfterAuth();
+  showLoading(false);       // ✅ IMPORTANT
+});
 
 // ================== FIRESTORE CLOUD SAVE ==================
 // doc: users/{uid}/app/save

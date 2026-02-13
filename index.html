@@ -15,10 +15,10 @@
   <div class="game">
 
     <!-- LOADING -->
-    <div id="loadingScreen">
-      <div class="card">
-        <h2>Life Quest</h2>
-        <p class="hint">Chargement...</p>
+    <div id="loadingScreen" class="loading hidden">
+      <div class="loading-card">
+        <div class="spinner"></div>
+        <div class="loading-text">Chargement…</div>
       </div>
     </div>
 
@@ -60,10 +60,14 @@
       <div id="homeStats">
         <div class="card">
           <h3>Joueuse</h3>
-          <p><strong>Pseudo :</strong> <span id="playerName"></span></p>
-          <p><strong>Niveau :</strong> <span id="globalLevel"></span></p>
-          <p><strong>XP totale :</strong> <span id="globalXp"></span></p>
-          <p><strong>Temps passé :</strong> <span id="globalTimeHours"></span> h</p>
+          <p><strong>Pseudo</strong> <span id="playerName"></span></p>
+          <p><strong>Niveau</strong> <span id="globalLevel"></span></p>
+          <p><strong>XP totale</strong> <span id="globalXp"></span></p>
+          <div class="stat-row">
+            <span class="stat-label"><strong>Temps passé</strong></span>
+            <span class="stat-value" id="globalTimePretty">00h00mn</span>
+          </div>
+
         </div>
 
 
@@ -77,13 +81,19 @@
               <button data-load="normal" class="active">Normale</button>
               <button data-load="light">Légère</button>
             </div>
-            <p><span id="weekXp"></span> / <span id="weekGoal"></span> XP</p>
+            <div class="stat-row compact">
+              <span class="stat-label">Hebdo</span>
+              <span class="stat-value"><span id="weekXp"></span>/<span id="weekGoal"></span> XP</span>
+            </div>
             <div class="progress-bar"><div class="progress-fill" id="weekProgress">0%</div></div>
           </div>
 
           <div class="subsection" style="margin-top:12px;">
             <h4>Mensuel</h4>
-            <p><span id="monthXp"></span> / <span id="monthGoal"></span> XP</p>
+            <div class="stat-row compact">
+              <span class="stat-label">Mensuel</span>
+              <span class="stat-value"><span id="monthXp"></span>/<span id="monthGoal"></span> XP</span>
+            </div>
             <div class="progress-bar"><div class="progress-fill" id="monthProgress">0%</div></div>
           </div>
 
@@ -142,11 +152,11 @@
       <div id="worldStats" class="tab-panel">
         <div class="card">
           <h3>Stats</h3>
-          <p><strong>Niveau du monde :</strong> <span id="worldLevel"></span></p>
-          <p><strong>XP semaine :</strong> <span id="worldWeekXp"></span></p>
-          <p><strong>XP totale :</strong> <span id="worldTotalXp"></span></p>
-          <p><strong>Règle XP :</strong> <span id="worldRuleText"></span></p>
-          <p><strong>Temps total :</strong> <span id="worldTotalTime"></span> min</p>
+          <p><strong>Niveau du monde</strong> <span id="worldLevel"></span></p>
+          <p><strong>XP semaine</strong> <span id="worldWeekXp"></span></p>
+          <p><strong>XP totale</strong> <span id="worldTotalXp"></span></p>
+          <p><strong>Règle XP</strong> <span id="worldRuleText"></span></p>
+          <p><strong>Temps total</strong> <span id="worldTotalTime"></span> min</p>
         </div>
       </div>
 
@@ -259,8 +269,8 @@
       <div class="card">
         <h3>Compte</h3>
 
-        <p><strong>Pseudo :</strong> <span id="accountPseudoLine">—</span></p>
-        <p><strong>Email :</strong> <span id="accountEmailLine">—</span></p>
+        <p><strong>Pseudo</strong> <span id="accountPseudoLine">—</span></p>
+        <p><strong>Email</strong> <span id="accountEmailLine">—</span></p>
 
         <button id="btnLogout" class="danger-btn btn-block">Se déconnecter</button>
       </div>
