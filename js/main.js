@@ -1362,32 +1362,6 @@ function renderAccountSection(user) {
   btnSignup && (btnSignup.onclick = signup);
   btnLogout && (btnLogout.onclick = logout);
 
-  // état session
-  function renderAccountSection() {
-    const user = auth.currentUser;
-
-    const loggedOut = document.getElementById("accountLoggedOut");
-    const loggedIn = document.getElementById("accountLoggedIn");
-
-    if (!loggedOut || !loggedIn) return;
-
-    if (user) {
-      loggedOut.classList.add("hidden");
-      loggedIn.classList.remove("hidden");
-
-      const pseudo = state?.playerName || localStorage.getItem("playerName") || "Joueuse";
-      document.getElementById("accountPseudo").textContent = pseudo;
-      document.getElementById("accountEmail").textContent = user.email || "";
-
-      if (authStatus) authStatus.textContent = "Connectée ✅";
-    } else {
-      loggedOut.classList.remove("hidden");
-      loggedIn.classList.add("hidden");
-
-      if (authStatus) authStatus.textContent = "Non connectée";
-    }
-  }
-
   auth.onAuthStateChanged((user) => {
     // état des boutons (si tu veux garder tes fonctions)
     if (user) setLoggedInUI(user);
@@ -1396,6 +1370,8 @@ function renderAccountSection(user) {
     // rendu fiable des sections compte
     renderAccountSection(user);
   });
+
+})();
 
 // ================== FIRESTORE CLOUD SAVE ==================
 let cloudAuthUser = null;
