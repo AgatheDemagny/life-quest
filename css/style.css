@@ -235,6 +235,16 @@ input:focus, select:focus {
   color: rgba(255,255,255,0.92);
 }
 
+.game {
+  padding: 22px 18px;
+  max-width: 420px;
+  margin: auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* espace vertical automatique entre tous les blocs */
+}
+
 /* ================== TOPBAR + BANNIÈRE (FIX CHEVAUCHEMENT) ================== */
 .topbar{
   display: flex;
@@ -281,7 +291,7 @@ input:focus, select:focus {
 
 /* ================== BARRES DE PROGRESSION ================== */
 .progress-bar{
-  height: 14px;
+  height: 22px;
   border-radius: 999px;
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.10);
