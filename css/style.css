@@ -1,148 +1,553 @@
-:root {
-  --accent: #ff4fd8;
-  --bg-dark-1: #2a0838;
-  --bg-dark-2: #14123a;
-  --card-bg: rgba(255,255,255,0.06);
-  --text-light: #ffffff;
+/* ================== PALETTE ET TYPO (DARK) ================== */
+:root{
+  /* Fond */
+  --bg-main: #0B0B0F;                 /* noir profond */
+  --bg-card: rgba(255,255,255,0.06);  /* cartes translucides */
+  --border-soft: rgba(255,255,255,0.10);
+
+  /* Texte */
+  --text-main: rgba(255,255,255,0.90);
+  --text-soft: rgba(255,255,255,0.72);
+
+  /* Palette (tes couleurs) : priorité violet + orange */
+  --purple: #80586D;           /* violet */
+  --orange: #9F5540;           /* orangé/terracotta */
+  --taupe: #9E8277;
+  --sand: #C49D83;
+
+  /* UI */
+  --accent: var(--orange);      /* boutons principaux */
+  --accent-soft: var(--purple); /* hover/actif */
+  --chip: rgba(255,255,255,0.10);
+
+  /* Progress */
+  --progress-bg: rgba(255,255,255,0.10);
+  --progress-fill: linear-gradient(90deg, rgba(255, 90, 160, 0.95), rgba(120, 80, 255, 0.95));
+
+  /* Danger */
+  --danger: #7A3E2F;
+
+  /* NEW: séparateurs */
+  --divider: rgba(255,255,255,0.08);
 }
 
-/* RESET */
+button, .time-input {
+  font-size: 16px;
+  padding: 12px;
+}
+
+/* ================== RESET + BASE ================== */
 * {
   box-sizing: border-box;
-}
-
-/* BODY */
-body {
   margin: 0;
+  padding: 0;
+}
+
+body{
   font-family: 'Poppins', sans-serif;
-  background: linear-gradient(160deg, var(--bg-dark-1), var(--bg-dark-2));
-  color: var(--text-light);
+  color: var(--text-main);
+
+  /* NEW: plus coloré (galaxy) */
+  background:
+    radial-gradient(900px 500px at 20% 0%, rgba(190, 70, 255, 0.22), transparent 60%),
+    radial-gradient(900px 500px at 90% 20%, rgba(70, 130, 255, 0.18), transparent 55%),
+    radial-gradient(900px 500px at 60% 90%, rgba(255, 90, 160, 0.14), transparent 55%),
+    linear-gradient(160deg, #3b0f4f, #1e1b4b);
 }
 
-/* TYPOGRAPHIE */
-h1, h2, h3 {
-  margin: 0 0 14px 0;
-  font-weight: 600;
-}
-
-h1 { font-size: 26px; }
-h2 { font-size: 20px; }
-h3 { font-size: 17px; }
-
-p, span, label, button, input, select {
-  font-size: 15px;
-}
-
-/* CONTAINER */
 .game {
-  padding: 20px;
-  max-width: 600px;
+  padding: 16px; /* NEW: un peu plus d’air */
+  max-width: 420px;
   margin: auto;
 }
 
-/* CARTES */
-.card {
-  background: var(--card-bg);
-  backdrop-filter: blur(12px);
-  padding: 20px;
-  border-radius: 18px;
-  margin-bottom: 20px;
+/* ================== TITRES ================== */
+h1, h2, h3 {
+  text-align: center;
+  margin: 10px 0;
+  font-weight: 700;
 }
 
-/* INPUTS */
-input, select {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  border: none;
-  margin-top: 8px;
-  margin-bottom: 16px;
-  font-family: 'Poppins', sans-serif;
-}
-
-/* BOUTONS (par défaut pleine largeur) */
+/* ================== BOUTONS ================== */
 button {
   width: 100%;
-  padding: 14px;
-  border-radius: 14px;
+  cursor: pointer;
   border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin: 6px 0;
   font-weight: 700;
   background: var(--accent);
-  color: white;
-  cursor: pointer;
-  margin: 8px 0;
+  color: #fff;
   box-shadow: 0 10px 24px rgba(0,0,0,0.30);
   transition: transform 0.12s ease, filter 0.12s ease, background 0.12s ease;
 }
 
 button:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.1);
+  background: var(--accent-soft);
 }
 
-/* BOUTONS SUR UNE MÊME LIGNE */
-.button-row {
-  display: flex;
+button:active {
+  transform: translateY(1px);
+  filter: brightness(0.98);
+}
+
+/* boutons "ghost" (secondaires) */
+.ghost{
+  background: rgba(255,255,255,0.08);
+  color: var(--text-main);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.24);
+}
+.ghost:hover{
+  background: rgba(255,255,255,0.14);
+  color: var(--text-main);
+}
+
+/* ================== GRID MONDES ================== */
+.worlds-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
+  margin-bottom: 15px;
 }
 
-.button-row button {
-  width: auto;
-  flex: 1;
+.world-btn {
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.08);
+  text-align: center;
+  color: var(--text-main);
+  font-weight: 800;
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.26);
 }
 
-/* PROGRESS BAR */
-.progress-bar {
+.world-btn:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+/* NEW: monde actif + coloré (pas juste gris/violet) */
+.world-btn.active { 
+  background: linear-gradient(90deg, rgba(255, 90, 160, 0.30), rgba(120, 80, 255, 0.28));
+  border-color: rgba(255,255,255,0.16);
+  box-shadow:
+    0 14px 30px rgba(120, 80, 255, 0.18),
+    0 14px 30px rgba(255, 90, 160, 0.12);
+}
+
+/* ================== INPUTS ================== */
+input, select {
   width: 100%;
-  height: 14px;
-  background: rgba(255,255,255,0.15);
-  border-radius: 10px;
-  overflow: hidden;
-  margin-top: 10px;
+  padding: 10px 12px;
+  margin-top: 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  font-size: 14px;
+  background: rgba(255,255,255,0.08);
+  color: var(--text-main);
+  box-shadow: 0 10px 18px rgba(0,0,0,0.22);
+  outline: none;
+}
+
+input:focus, select:focus {
+  box-shadow: 0 0 0 3px rgba(159, 85, 64, 0.25), 0 12px 24px rgba(0,0,0,0.26);
+  border-color: rgba(159,85,64,0.55);
+}
+
+::placeholder {
+  color: rgba(255,255,255,0.55);
+}
+
+.subsection h4{
+  margin: 6px 0 4px;
+  text-align: left;
+  font-size: 14px;
+  opacity: .9;
+}
+
+/* ================== CARDS ================== */
+.card {
+  /* NEW: plus léger + plus rond + plus premium */
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 22px;
+  padding: 16px;
+  margin: 12px 0;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.28);
+  transition: transform 0.12s ease;
+}
+
+.card:hover {
+  transform: translateY(-1px);
+}
+
+.card.subtle{
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.24);
+}
+
+/* NEW: au lieu de gros blocs internes → lignes séparées */
+.card p{
+  display:flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 2px;
+  margin: 0;
+  border-bottom: 1px solid var(--divider);
+}
+.card p:last-child{
+  border-bottom: none;
+  padding-bottom: 2px;
+}
+.card strong{
+  color: rgba(255,255,255,0.85);
+}
+.card p span{
+  color: rgba(255,255,255,0.92);
+}
+
+/* banner */
+.app-banner {
+  width: 85%;
+  max-width: 420px;
+  height: auto;
+  display: block;
+  margin: 10px auto 25px auto;
+  border-radius: 16px;
+
+  /* NEW: léger glow pour coller au style */
+  box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+}
+
+/* ================== BARRES DE PROGRESSION ================== */
+.progress-bar { 
+  background: var(--progress-bg);
+  border-radius: 999px; 
+  overflow: hidden; 
+  height: 22px; 
+  margin-top: 8px; 
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.30);
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
 .progress-fill {
   height: 100%;
-  background: var(--accent);
+  background: var(--progress-fill);
   width: 0%;
-  text-align: right;
-  padding-right: 6px;
-  font-size: 11px;
-  line-height: 14px;
-  border-radius: 10px;
+  text-align: center;
+  line-height: 22px;
+  font-weight: 800;
+  color: #fff;
+  transition: width 0.35s ease;
+
+  /* NEW: glow */
+  box-shadow: 0 0 18px rgba(120, 80, 255, 0.22);
 }
 
-/* MONDES */
-.worlds-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 15px;
+/* ================== SECTIONS ================== */
+.hidden { display: none; }
+
+.list-item, .quest-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
 }
 
-/* POPUP FULL WIDTH */
+.quest-item.done span {
+  text-decoration: line-through;
+  opacity: 0.65;
+}
+
+/* ================== POPUP ================== */
 #popup {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: var(--bg-dark-1);
-  padding: 24px;
-  border-radius: 20px 20px 0 0;
-  box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
-}
-
-/* CLASSE UTILITAIRE */
-.hidden {
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(159,85,64,0.95);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-weight: 800;
+  box-shadow: 0 14px 30px rgba(0,0,0,0.35);
   display: none;
+  z-index: 2000;
+  animation: popupShow 0.35s ease forwards;
 }
 
-/* PETIT TEXTE MALUS */
-.malus {
+@keyframes popupShow {
+  0% { opacity: 0; transform: translateX(-50%) translateY(16px); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ================== TOPBAR + TABS ================== */
+.icon-btn{
+  width:42px;
+  height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:14px;
+  background: rgba(255,255,255,0.08);
+  color: var(--text-main);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 10px 18px rgba(0,0,0,0.24);
+}
+
+.tabs{
+  display:flex;
+  gap:8px;
+  margin:10px 0 12px;
+}
+
+.tab-btn{
+  flex:1;
+  border-radius:14px;
+  padding: 10px 10px;
+  background: rgba(255,255,255,0.08);
+  color: var(--text-main);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 10px 18px rgba(0,0,0,0.20);
+}
+
+.tab-btn:hover{
+  background: rgba(255,255,255,0.12);
+}
+
+/* NEW: onglet actif plus coloré */
+.tab-btn.active{
+  background: linear-gradient(90deg, rgba(255, 90, 160, 0.35), rgba(120, 80, 255, 0.32));
+  border-color: rgba(255,255,255,0.16);
+  color:#fff;
+  box-shadow:
+    0 12px 26px rgba(120, 80, 255, 0.14),
+    0 12px 26px rgba(255, 90, 160, 0.10);
+}
+
+.tab-panel{}
+
+/* segmented */
+.segmented{
+  display:flex;
+  gap:6px;
+  margin:8px 0 10px;
+}
+
+/* NEW: boutons non sélectionnés moins tristes */
+.segmented button{
+  flex:1;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: var(--text-main);
+}
+
+.segmented button:hover{
+  background: rgba(255,255,255,0.10);
+}
+
+/* NEW: sélectionné = couleur + glow */
+.segmented button.active{
+  background: linear-gradient(90deg, rgba(255, 90, 160, 0.85), rgba(120, 80, 255, 0.85));
+  border-color: rgba(255,255,255,0.18);
+  color:#fff;
+  box-shadow:
+    0 10px 24px rgba(120, 80, 255, 0.22),
+    0 10px 24px rgba(255, 90, 160, 0.16);
+}
+
+/* ================== MODAL ================== */
+.modal{
+  position:fixed;
+  inset:0;
+  background: rgba(0,0,0,0.78); backdrop-filter: blur(2px);
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding:16px;
+  z-index:1500;
+}
+
+.modal-content{
+  width:100%;
+  max-width:420px;
+}
+
+.modal-content.card{
+  background: rgba(18, 12, 18, 0.96);
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+.inline{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.inline input{ flex:1; }
+
+.actions{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+
+.actions button{ flex:1; }
+
+.hint{
   font-size: 13px;
-  opacity: 0.8;
+  color: var(--text-soft);
+  margin-top:8px;
 }
 
-/* ANIMATION DOUCE */
-.card, button {
-  transition: all 0.2s ease;
+/* settings grid */
+.grid-3{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap:8px;
+  margin:6px 0 10px;
+}
+
+/* objectives */
+.objective-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:10px;
+}
+
+.objective-row .label{
+  flex:1;
+  font-weight: 700;
+}
+
+.badge{
+  font-size:12px;
+  padding:4px 8px;
+  border-radius:999px;
+  background: rgba(255,255,255,0.10);
+  color: var(--text-main);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+.steps-preview{
+  margin-top:8px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.step-pill{
+  font-size:12px;
+  padding:4px 8px;
+  border-radius:999px;
+  background: rgba(255,255,255,0.10);
+  color: var(--text-main);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+/* danger */
+.card.danger{
+  border: 2px solid rgba(122, 62, 47, 0.60);
+}
+
+.danger-btn{
+  background: var(--danger);
+  color:#fff;
+}
+
+.danger-btn:hover{
+  background: #5f2f24;
+}
+
+/* Force la fermeture des modals quand .hidden est présent */
+.modal.hidden {
+  display: none !important;
+}
+
+/* ================== RESPONSIVE MOBILE ================== */
+@media (max-width: 420px) {
+  .worlds-grid { grid-template-columns: 1fr; }
+  .card { padding: 14px; }
+  input, select, button { font-size: 16px; padding: 10px; }
+  .grid-3{ grid-template-columns: 1fr; }
+}
+
+.topbar{
+  position: relative;
+  display: block;         /* important : évite le "côte à côte" */
+  text-align: center;
+}
+
+#openSettingsBtn.icon-btn{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+
+  /* look bouton discret */
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 999px;
+  padding: 8px 10px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+#openSettingsBtn.icon-btn:active{
+  transform: scale(0.96);
+}
+
+/* ===== Dialog (alert/confirm custom) ===== */
+.dialog-card{
+  position: relative;
+  overflow: hidden;
+}
+
+.dialog-card::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  background: linear-gradient(120deg,
+    rgba(255, 90, 160, 0.35),
+    rgba(120, 80, 255, 0.35),
+    rgba(255, 90, 160, 0.25)
+  );
+  filter: blur(18px);
+  opacity: .75;
+  pointer-events:none;
+}
+
+.dialog-card > *{
+  position: relative;
+  z-index: 1;
+}
+
+.dialog-message{
+  margin-top: 10px;
+  margin-bottom: 6px;
+  color: rgba(255,255,255,0.86);
+  line-height: 1.35;
+}
+
+/* petit “shake” si tu veux plus tard pour erreurs */
+@keyframes dialogPop {
+  from { transform: translateY(14px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+#dialogModal .modal-content{
+  animation: dialogPop 0.18s ease-out;
+}
+
+.dialog-input-wrap{
+  margin-top: 10px;
+}
+.dialog-input-wrap.hidden{
+  display:none;
+}
+#dialogInput{
+  width:100%;
 }
