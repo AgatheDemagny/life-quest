@@ -746,3 +746,13 @@ input + label {
   flex-direction: column;
   gap: 18px;
 }
+
+.tab-panel{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+.tab-panel.hidden{
+  display:none; /* garde ton hidden clean */
+}
+
