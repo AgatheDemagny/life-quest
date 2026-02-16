@@ -230,6 +230,59 @@
 
           <button class="btn-block" id="createObjectiveBtn">Ajouter</button>
         </div>
+        <!-- MODAL: Modifier objectif -->
+        <div id="editObjectiveModal" class="modal hidden" role="dialog" aria-modal="true" aria-hidden="true">
+          <div class="modal-content card">
+            <h3 id="editObjectiveTitle">Modifier l’objectif</h3>
+
+            <label>Type</label>
+            <select id="editObjectiveTypeSelect">
+              <option value="repeatable">🔁 Répétable</option>
+              <option value="milestone">📈 Palier</option>
+              <option value="unique">⭐ Unique</option>
+            </select>
+
+            <div id="editObjectiveFieldsRepeatable">
+              <label>Nom</label>
+              <input id="editObjNameInput" placeholder="Ex : Aller courir" />
+              <label>Récompense (XP)</label>
+              <input id="editObjXpInput" type="number" min="1" inputmode="numeric" placeholder="Ex : 20" />
+            </div>
+
+            <div id="editObjectiveFieldsUnique" class="hidden">
+              <label>Nom</label>
+              <input id="editObjNameUniqueInput" placeholder="Ex : Finir un marathon" />
+              <label>Récompense (XP)</label>
+              <input id="editObjXpUniqueInput" type="number" min="1" inputmode="numeric" placeholder="Ex : 200" />
+            </div>
+
+            <div id="editObjectiveFieldsMilestone" class="hidden">
+              <label>Texte (2 parties)</label>
+              <div class="inline">
+                <input id="editMilestonePrefixInput" placeholder="Ex : Lire" />
+                <input id="editMilestoneSuffixInput" placeholder="Ex : livres" />
+              </div>
+
+              <div class="card subtle">
+                <p class="hint">Modifie les paliers : tu peux vider puis re-ajouter si besoin.</p>
+                <div class="inline">
+                  <input id="editMilestoneCountInput" type="number" min="1" inputmode="numeric" placeholder="Palier (ex : 1)" />
+                  <input id="editMilestoneXpInput" type="number" min="1" inputmode="numeric" placeholder="XP (ex : 10)" />
+                </div>
+                <button id="editAddMilestoneStepBtn" class="ghost">➕ Ajouter palier</button>
+                <div id="editMilestoneStepsPreview" class="steps-preview"></div>
+              </div>
+
+              <button id="editSaveMilestoneBtn">Enregistrer l’objectif palier</button>
+            </div>
+
+            <div class="actions">
+              <button id="editSaveObjectiveBtn">Enregistrer</button>
+              <button id="editCancelObjectiveBtn" class="ghost" type="button">Annuler</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
     

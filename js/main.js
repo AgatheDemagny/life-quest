@@ -259,6 +259,31 @@ const manageWorldsActiveList = el("manageWorldsActiveList");
 const manageWorldsArchivedList = el("manageWorldsArchivedList");
 const resetGameBtn = el("resetGameBtn");
 
+// edit objective modal
+const editObjectiveModal = el("editObjectiveModal");
+const editObjectiveTitle = el("editObjectiveTitle");
+const editObjectiveTypeSelect = el("editObjectiveTypeSelect");
+
+const editObjectiveFieldsRepeatable = el("editObjectiveFieldsRepeatable");
+const editObjectiveFieldsUnique = el("editObjectiveFieldsUnique");
+const editObjectiveFieldsMilestone = el("editObjectiveFieldsMilestone");
+
+const editObjNameInput = el("editObjNameInput");
+const editObjXpInput = el("editObjXpInput");
+const editObjNameUniqueInput = el("editObjNameUniqueInput");
+const editObjXpUniqueInput = el("editObjXpUniqueInput");
+
+const editMilestonePrefixInput = el("editMilestonePrefixInput");
+const editMilestoneSuffixInput = el("editMilestoneSuffixInput");
+const editMilestoneCountInput = el("editMilestoneCountInput");
+const editMilestoneXpInput = el("editMilestoneXpInput");
+const editAddMilestoneStepBtn = el("editAddMilestoneStepBtn");
+const editMilestoneStepsPreview = el("editMilestoneStepsPreview");
+
+const editSaveObjectiveBtn = el("editSaveObjectiveBtn");
+const editSaveMilestoneBtn = el("editSaveMilestoneBtn");
+const editCancelObjectiveBtn = el("editCancelObjectiveBtn");
+
 // popup
 const popupEl = el("popup");
 
@@ -419,6 +444,56 @@ function forceOpenAddWorldModal() {
   modal.style.display = "flex";
   modal.setAttribute("aria-hidden", "false");
 }
+
+let editDraftMilestoneSteps = [];
+
+function openEditObjectiveModal(){
+  if (!editObjectiveModal) return;
+  editObjectiveModal.classList.remove("hidden");
+  editObjectiveModal.style.display = "flex";
+  editObjectiveModal.setAttribute("aria-hidden", "false");
+}
+
+function closeEditObjectiveModal(){
+  if (!editObjectiveModal) return;
+  editObjectiveModal.classList.add("hidden");
+  editObjectiveModal.style.display = "none";
+  editObjectiveModal.setAttribute("aria-hidden", "true");
+  editingObjectiveId = null;
+  editDraftMilestoneSteps = [];
+  renderEditMilestonePreview();
+}
+
+function refreshEditObjectiveTypeUI(){
+  const t = editObjectiveTypeSelect?.value || "repeatable";
+  if (editObjectiveFieldsRepeatable) editObjectiveFieldsRepeatable.classList.toggle("hidden", t !== "repeatable");
+  if (editObjectiveFieldsUnique) editObjectiveFieldsUnique.classList.toggle("hidden", t !== "unique");
+  if (editObjectiveFieldsMilestone) editObjectiveFieldsMilestone.classList.toggle("hidden", t !== "milestone");
+
+  // bouton save classique caché si milestone (car milestone a son bouton dédié)
+  if (editSaveObjectiveBtn) editSaveObjectiveBtn.classList.toggle("hidden", t === "milestone");
+  if (editSaveMilestoneBtn) editSaveMilestoneBtn.classList.toggle("hidden", t !== "milestone");
+}
+
+function renderEditMilestonePreview(){
+  if (!editMilestoneStepsPreview) return;
+  editMilestoneStepsPreview.innerHTML = "";
+  editDraftMilestoneSteps.forEach(s => {
+    const pill = document.createElement("div");
+    pill.className = "step-pill";
+    pill.innerText = `${s.count} → ${s.xp} XP`;
+    editMilestoneStepsPreview.appendChild(pill);
+  });
+}
+
+if (editObjectiveTypeSelect) editObjectiveTypeSelect.onchange = refreshEditObjectiveTypeUI;
+if (editCancelObjectiveBtn) editCancelObjectiveBtn.onclick = closeEditObjectiveModal;
+
+// clic sur overlay pour fermer
+document.addEventListener("click", (e) => {
+  if (editObjectiveModal && e.target === editObjectiveModal) closeEditObjectiveModal();
+});
+
 
 // ================== Levels ==================
 function xpForNextLevel(level, base, growth) {
@@ -862,35 +937,39 @@ function getObjectiveMetaText(obj){
 function startEditObjective(obj){
   editingObjectiveId = obj.id;
 
-  // bouton devient "Enregistrer"
-  if (createObjectiveBtn) createObjectiveBtn.innerText = "Enregistrer";
+  if (editObjectiveTitle) {
+    editObjectiveTitle.textContent = `Modifier l’objectif`;
+  }
 
-  // type + UI
-  if (objectiveTypeSelect) objectiveTypeSelect.value = obj.type;
-  refreshObjectiveTypeUI();
+  // type
+  if (editObjectiveTypeSelect) editObjectiveTypeSelect.value = obj.type || "repeatable";
+  refreshEditObjectiveTypeUI();
 
-  // pré-remplissage
+  // reset champs
+  if (editObjNameInput) editObjNameInput.value = "";
+  if (editObjXpInput) editObjXpInput.value = "";
+  if (editObjNameUniqueInput) editObjNameUniqueInput.value = "";
+  if (editObjXpUniqueInput) editObjXpUniqueInput.value = "";
+  if (editMilestonePrefixInput) editMilestonePrefixInput.value = "";
+  if (editMilestoneSuffixInput) editMilestoneSuffixInput.value = "";
+  editDraftMilestoneSteps = [];
+  renderEditMilestonePreview();
+
+  // pré-remplir selon type
   if (obj.type === "repeatable") {
-    if (objNameInput) objNameInput.value = obj.name || "";
-    if (objXpInput) objXpInput.value = obj.xp ?? "";
+    if (editObjNameInput) editObjNameInput.value = obj.name || "";
+    if (editObjXpInput) editObjXpInput.value = obj.xp ?? "";
+  } else if (obj.type === "unique") {
+    if (editObjNameUniqueInput) editObjNameUniqueInput.value = obj.name || "";
+    if (editObjXpUniqueInput) editObjXpUniqueInput.value = obj.xp ?? "";
+  } else if (obj.type === "milestone") {
+    if (editMilestonePrefixInput) editMilestonePrefixInput.value = obj.prefix || "";
+    if (editMilestoneSuffixInput) editMilestoneSuffixInput.value = obj.suffix || "";
+    editDraftMilestoneSteps = (obj.steps || []).map(s => ({ ...s }));
+    renderEditMilestonePreview();
   }
 
-  if (obj.type === "unique") {
-    if (objNameUniqueInput) objNameUniqueInput.value = obj.name || "";
-    if (objXpUniqueInput) objXpUniqueInput.value = obj.xp ?? "";
-  }
-
-  if (obj.type === "milestone") {
-    if (milestonePrefixInput) milestonePrefixInput.value = obj.prefix || "";
-    if (milestoneSuffixInput) milestoneSuffixInput.value = obj.suffix || "";
-
-    // recharge les steps dans le draft + preview
-    draftMilestoneSteps = (obj.steps || []).map(s => ({ ...s }));
-    renderMilestonePreview();
-  }
-
-  // Optionnel: aller vers la zone "Ajouter un objectif"
-  // createObjectiveBtn?.scrollIntoView({ behavior:"smooth", block:"center" });
+  openEditObjectiveModal();
 }
 
 function formatDateTime(ts) {
@@ -1276,6 +1355,82 @@ async function validateObjective(objectiveId) {
     return;
   }
 }
+
+if (editSaveObjectiveBtn) editSaveObjectiveBtn.onclick = async () => {
+  const w = state.worlds[state.activeWorldId];
+  if (!w) return;
+
+  const obj = (w.objectives || []).find(o => o.id === editingObjectiveId);
+  if (!obj) return;
+
+  const t = editObjectiveTypeSelect?.value || obj.type;
+  obj.type = t;
+
+  if (t === "repeatable") {
+    const name = (editObjNameInput?.value || "").trim();
+    const xp = parseInt(editObjXpInput?.value || "", 10);
+    if (!name) return uiAlert("Nom requis", "Modifier objectif");
+    if (!Number.isFinite(xp) || xp <= 0) return uiAlert("XP invalide", "Modifier objectif");
+
+    obj.name = name;
+    obj.xp = xp;
+  }
+
+  if (t === "unique") {
+    const name = (editObjNameUniqueInput?.value || "").trim();
+    const xp = parseInt(editObjXpUniqueInput?.value || "", 10);
+    if (!name) return uiAlert("Nom requis", "Modifier objectif");
+    if (!Number.isFinite(xp) || xp <= 0) return uiAlert("XP invalide", "Modifier objectif");
+
+    obj.name = name;
+    obj.xp = xp;
+  }
+
+  save();
+  showPopup("📝 Objectif modifié");
+  closeEditObjectiveModal();
+  renderObjectives();
+};
+
+if (editAddMilestoneStepBtn) editAddMilestoneStepBtn.onclick = async () => {
+  const count = parseInt(editMilestoneCountInput?.value || "", 10);
+  const xp = parseInt(editMilestoneXpInput?.value || "", 10);
+
+  if (!Number.isFinite(count) || count <= 0) return uiAlert("Palier invalide", "Modifier objectif");
+  if (!Number.isFinite(xp) || xp <= 0) return uiAlert("XP invalide", "Modifier objectif");
+
+  editDraftMilestoneSteps.push({ count, xp, done: false });
+
+  if (editMilestoneCountInput) editMilestoneCountInput.value = "";
+  if (editMilestoneXpInput) editMilestoneXpInput.value = "";
+
+  renderEditMilestonePreview();
+};
+
+if (editSaveMilestoneBtn) editSaveMilestoneBtn.onclick = async () => {
+  const w = state.worlds[state.activeWorldId];
+  if (!w) return;
+
+  const obj = (w.objectives || []).find(o => o.id === editingObjectiveId);
+  if (!obj) return;
+
+  const prefix = (editMilestonePrefixInput?.value || "").trim();
+  const suffix = (editMilestoneSuffixInput?.value || "").trim();
+
+  if (!prefix) return uiAlert("Texte 1 requis", "Modifier objectif");
+  if (!suffix) return uiAlert("Texte 2 requis", "Modifier objectif");
+  if (editDraftMilestoneSteps.length === 0) return uiAlert("Ajoute au moins un palier", "Modifier objectif");
+
+  obj.type = "milestone";
+  obj.prefix = prefix;
+  obj.suffix = suffix;
+  obj.steps = editDraftMilestoneSteps.map(s => ({ ...s }));
+
+  save();
+  showPopup("📝 Objectif palier modifié");
+  closeEditObjectiveModal();
+  renderObjectives();
+};
 
 // ================== Settings ==================
 function renderSettings() {
