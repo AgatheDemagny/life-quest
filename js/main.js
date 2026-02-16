@@ -72,6 +72,35 @@ function defaultData() {
 }
 
 let settingsReturnTo = "home"; // "home" ou "world"
+let editingObjectiveId = null; // null = ajout, sinon = modification
+
+function formatXp(xp){
+  const n = Number(xp || 0);
+  return `${n} XP`;
+}
+
+function resetObjectiveForm(){
+  editingObjectiveId = null;
+  const btn = document.getElementById("createObjectiveBtn");
+  if (btn) btn.innerText = "Ajouter";
+
+  // reset champs communs
+  if (objNameInput) objNameInput.value = "";
+  if (objXpInput) objXpInput.value = "";
+  if (objNameUniqueInput) objNameUniqueInput.value = "";
+  if (objXpUniqueInput) objXpUniqueInput.value = "";
+
+  // milestone fields
+  if (milestonePrefixInput) milestonePrefixInput.value = "";
+  if (milestoneSuffixInput) milestoneSuffixInput.value = "";
+  if (milestoneCountInput) milestoneCountInput.value = "";
+  if (milestoneXpInput) milestoneXpInput.value = "";
+  if (milestoneStepsPreview) milestoneStepsPreview.innerHTML = "";
+
+  // remettre le type par défaut + champs visibles cohérents
+  if (objectiveTypeSelect) objectiveTypeSelect.value = "repeatable";
+  showObjectiveFieldsForType("repeatable");
+}
 
 function load() {
   const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -125,6 +154,12 @@ function save() {
   state.meta.updatedAt = Date.now();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   scheduleCloudSave(); // si connectée
+}
+
+function showObjectiveFieldsForType(type){
+  objectiveFieldsRepeatable.classList.toggle("hidden", type !== "repeatable");
+  objectiveFieldsUnique.classList.toggle("hidden", type !== "unique");
+  objectiveFieldsMilestone.classList.toggle("hidden", type !== "milestone");
 }
 
 // ================== DOM ==================
@@ -669,87 +704,193 @@ function renderObjectives() {
   const w = state.worlds[state.activeWorldId];
   if (!w || !objectivesListEl) return;
 
-  objectivesListEl.innerHTML = "";
+  // on garde ton format tableau
   const list = Array.isArray(w.objectives) ? w.objectives : (w.objectives = []);
 
-  if (list.length === 0) {
+  // séparations demandées
+  const enCours = list.filter(o => o.type === "unique" && !o.done);                 // uniques non cochés
+  const paliers = list.filter(o => o.type === "milestone" && !isMilestoneDone(o));  // paliers en cours
+  const repetables = list.filter(o => o.type === "repeatable");                     // toujours “actifs” (archivage via checkbox)
+  const archives = list.filter(o => isArchivedObjective(o));                        // cochés / finis
+
+  objectivesListEl.innerHTML = "";
+
+  const nothing =
+    enCours.length === 0 &&
+    paliers.length === 0 &&
+    repetables.length === 0 &&
+    archives.length === 0;
+
+  if (nothing) {
     objectivesListEl.innerHTML = `<p class="hint">Aucun objectif pour l’instant.</p>`;
     return;
   }
 
-  list.forEach(obj => {
-    const row = document.createElement("div");
-    row.className = "objective-row";
+  // Affiche seulement les titres non vides
+  addObjectiveSection("En cours", enCours, { showCheck: true, showEdit: true, archived: false });
+  addObjectiveSection("Palier", paliers, { showCheck: true, showEdit: true, archived: false });
+  addObjectiveSection("Répétables", repetables.filter(o => !o.archived), { showCheck: true, showEdit: true, archived: false });
+  addObjectiveSection("Archivés", archives, { showCheck: false, showEdit: true, archived: true });
+}
 
-    const label = document.createElement("div");
-    label.className = "label";
+function addObjectiveSection(title, items, opts){
+  if (!items || items.length === 0) return;
 
-    const badge = document.createElement("span");
-    badge.className = "badge";
+  const h = document.createElement("div");
+  h.className = "obj-section-title";
+  h.textContent = title;
+  objectivesListEl.appendChild(h);
 
-    let title = "";
-    let canValidate = true;
-    let xp = 0;
+  items.forEach(obj => objectivesListEl.appendChild(renderObjectiveRow(obj, opts)));
+}
 
-    if (obj.type === "repeatable") {
-      const done = obj.doneCount || 0;
-      const gained = done * (obj.xp || 0);
-      title = `${obj.name} (${obj.xp} / ${gained} XP)`;
-      badge.innerText = `🔁 x${done}`;
-      xp = obj.xp;
+function renderObjectiveRow(obj, opts){
+  const row = document.createElement("div");
+  row.className = "obj-row";
 
-    } else if (obj.type === "unique") {
-      const gained = obj.done ? obj.xp : 0;
-      title = `${obj.name} (${obj.xp} / ${gained} XP)`;
-      badge.innerText = obj.done ? "✅" : "⭐";
-      xp = obj.xp;
+  const left = document.createElement("div");
+  left.className = "obj-left";
 
-      canValidate = !obj.done;
-      if (obj.done) label.style.textDecoration = "line-through";
+  // checkbox (pas sur archivés)
+  if (opts.showCheck) {
+    const check = document.createElement("input");
+    check.type = "checkbox";
+    check.className = "obj-check";
 
-    } else if (obj.type === "milestone") {
-      const steps = obj.steps || [];
-      const doneSteps = steps.filter(s => s.done);
-      const lastDone = doneSteps.length ? doneSteps[doneSteps.length - 1] : null;
-      const next = steps.find(s => !s.done) || null;
+    // état checkbox selon type
+    check.checked = isArchivedObjective(obj);
 
-      if (!next && !lastDone) {
-        label.innerText = "(objectif palier vide)";
-        badge.innerText = "📈";
-        canValidate = false;
-        xp = 0;
-      } else if (!next && lastDone) {
-        const gained = doneSteps.reduce((s, st) => s + (st.xp || 0), 0);
-        label.innerText = `${obj.prefix} ${lastDone.count} ${obj.suffix} ✅ (${0} / ${gained} XP)`;
-        badge.innerText = "✅";
-        canValidate = false;
-        xp = 0;
-        label.style.textDecoration = "line-through";
-      } else {
-        const gained = doneSteps.reduce((s, st) => s + (st.xp || 0), 0);
-        const lastDoneHtml = lastDone
-          ? `<div style="opacity:.65;text-decoration:line-through;">${obj.prefix} ${lastDone.count} ${obj.suffix} ✅</div>`
-          : "";
-        const nextHtml = `<div><strong>${obj.prefix} ${next.count} ${obj.suffix}</strong> <span class="hint">(${next.xp} / ${gained} XP)</span></div>`;
-        label.innerHTML = `${lastDoneHtml}${nextHtml}`;
-        badge.innerText = "📈";
-        canValidate = true;
-        xp = next.xp;
+    check.onchange = () => {
+      // unique : check => done true/false
+      if (obj.type === "unique") {
+        obj.done = check.checked;
       }
-    }
+      // milestone : check => finit tous les steps / ou réactive (remet tout à false)
+      else if (obj.type === "milestone") {
+        if (check.checked) {
+          (obj.steps || []).forEach(s => s.done = true);
+        } else {
+          (obj.steps || []).forEach(s => s.done = false);
+        }
+      }
+      // repeatable : on archive via une propriété dédiée
+      else if (obj.type === "repeatable") {
+        obj.archived = check.checked;
+      }
 
-    if (obj.type !== "milestone") label.innerText = title;
+      save();
+      renderObjectives();
+    };
 
-    const btn = document.createElement("button");
-    btn.innerText = canValidate ? `${xp} XP` : "✓";
-    btn.disabled = !canValidate;
-    btn.onclick = () => validateObjective(obj.id);
+    left.appendChild(check);
+  }
 
-    row.appendChild(label);
-    row.appendChild(badge);
-    row.appendChild(btn);
-    objectivesListEl.appendChild(row);
-  });
+  const title = document.createElement("div");
+  title.className = "obj-title";
+  title.textContent = `${getObjectiveTitle(obj)} (${getObjectiveXpText(obj)})`;
+  left.appendChild(title);
+
+  const metaText = getObjectiveMetaText(obj);
+  if (metaText) {
+    const meta = document.createElement("div");
+    meta.className = "obj-meta";
+    meta.textContent = metaText;
+    left.appendChild(meta);
+  }
+
+  const actions = document.createElement("div");
+  actions.className = "obj-actions";
+
+  const editBtn = document.createElement("button");
+  editBtn.className = "obj-edit-btn";
+  editBtn.type = "button";
+  editBtn.title = "Modifier";
+  editBtn.textContent = "🗒️";
+  editBtn.onclick = () => startEditObjective(obj);
+  actions.appendChild(editBtn);
+
+  row.appendChild(left);
+  row.appendChild(actions);
+  return row;
+}
+
+function getObjectiveTitle(obj){
+  if (obj.type === "milestone") {
+    // exemple: "Lire X livres" -> on garde prefix/suffix sans mettre le X ici
+    return `${obj.prefix} … ${obj.suffix}`.trim();
+  }
+  return (obj.name || "Objectif").trim();
+}
+
+function isMilestoneDone(obj){
+  const steps = obj.steps || [];
+  return steps.length > 0 && steps.every(s => s.done);
+}
+
+function isArchivedObjective(obj){
+  if (obj.type === "unique") return !!obj.done;
+  if (obj.type === "milestone") return isMilestoneDone(obj);
+  if (obj.type === "repeatable") return !!obj.archived;
+  return false;
+}
+
+function getObjectiveXpText(obj){
+  if (obj.type === "milestone") {
+    // XP du prochain palier (ou 0 si fini)
+    const step = (obj.steps || []).find(s => !s.done);
+    return step ? `${step.xp} XP` : `0 XP`;
+  }
+  // unique / repeatable
+  return `${Number(obj.xp || 0)} XP`;
+}
+
+function getObjectiveMetaText(obj){
+  if (obj.type === "milestone") {
+    const steps = obj.steps || [];
+    const done = steps.filter(s => s.done).length;
+    const total = steps.length;
+    if (total > 0) return `Palier ${Math.min(done + 1, total)}/${total}`;
+    return "";
+  }
+  if (obj.type === "repeatable") {
+    const n = Number(obj.doneCount || 0);
+    return `${n} fois`;
+  }
+  return "";
+}
+
+function startEditObjective(obj){
+  editingObjectiveId = obj.id;
+
+  // bouton devient "Enregistrer"
+  if (createObjectiveBtn) createObjectiveBtn.innerText = "Enregistrer";
+
+  // type + UI
+  if (objectiveTypeSelect) objectiveTypeSelect.value = obj.type;
+  refreshObjectiveTypeUI();
+
+  // pré-remplissage
+  if (obj.type === "repeatable") {
+    if (objNameInput) objNameInput.value = obj.name || "";
+    if (objXpInput) objXpInput.value = obj.xp ?? "";
+  }
+
+  if (obj.type === "unique") {
+    if (objNameUniqueInput) objNameUniqueInput.value = obj.name || "";
+    if (objXpUniqueInput) objXpUniqueInput.value = obj.xp ?? "";
+  }
+
+  if (obj.type === "milestone") {
+    if (milestonePrefixInput) milestonePrefixInput.value = obj.prefix || "";
+    if (milestoneSuffixInput) milestoneSuffixInput.value = obj.suffix || "";
+
+    // recharge les steps dans le draft + preview
+    draftMilestoneSteps = (obj.steps || []).map(s => ({ ...s }));
+    renderMilestonePreview();
+  }
+
+  // Optionnel: aller vers la zone "Ajouter un objectif"
+  // createObjectiveBtn?.scrollIntoView({ behavior:"smooth", block:"center" });
 }
 
 function formatDateTime(ts) {
@@ -1000,38 +1141,65 @@ if (createMilestoneObjectiveBtn) createMilestoneObjectiveBtn.onclick = async () 
   const w = state.worlds[state.activeWorldId];
   if (!w) return;
 
+  const isEditing = !!editingObjectiveId;
+  let obj = null;
+
+  if (isEditing) {
+    obj = (w.objectives || []).find(o => o.id === editingObjectiveId);
+    if (!obj) { resetObjectiveForm(); return; }
+  } else {
+    obj = { id: "obj-" + Date.now(), type: "milestone" };
+    w.objectives.push(obj);
+  }
+
   const prefix = (milestonePrefixInput?.value || "").trim();
   const suffix = (milestoneSuffixInput?.value || "").trim();
   if (!prefix) return uiAlert("Texte 1 requis (ex : Lire)", "Objectifs");
   if (!suffix) return uiAlert("Texte 2 requis (ex : livres)", "Objectifs");
   if (draftMilestoneSteps.length === 0) return uiAlert("Ajoute au moins un palier", "Objectifs");
 
-  const id = "obj-" + Date.now();
+  obj.type = "milestone";
+  obj.prefix = prefix;
+  obj.suffix = suffix;
+  obj.steps = draftMilestoneSteps.map(s => ({ ...s }));
 
-  w.objectives.push({
-    id,
-    type: "milestone",
-    prefix,
-    suffix,
-    steps: draftMilestoneSteps.map(s => ({ ...s }))
-  });
-
+  // reset
   if (milestonePrefixInput) milestonePrefixInput.value = "";
   if (milestoneSuffixInput) milestoneSuffixInput.value = "";
   draftMilestoneSteps = [];
   renderMilestonePreview();
 
+  editingObjectiveId = null;
+  if (createObjectiveBtn) createObjectiveBtn.innerText = "Ajouter";
+
   save();
-  showPopup("🎯 Objectif palier ajouté");
+  showPopup(isEditing ? "📝 Objectif palier modifié" : "🎯 Objectif palier ajouté");
   renderObjectives();
 };
+
 
 if (createObjectiveBtn) createObjectiveBtn.onclick = async () => {
   const w = state.worlds[state.activeWorldId];
   if (!w) return;
 
   const t = objectiveTypeSelect?.value || "repeatable";
-  const id = "obj-" + Date.now();
+  const isEditing = !!editingObjectiveId;
+
+  // si édition : on récupère l'objet existant
+  let obj = null;
+  if (isEditing) {
+    obj = (w.objectives || []).find(o => o.id === editingObjectiveId);
+    if (!obj) {
+      resetObjectiveForm();
+      return;
+    }
+  } else {
+    obj = { id: "obj-" + Date.now(), type: t };
+    w.objectives.push(obj);
+  }
+
+  // IMPORTANT : si l'utilisateur change le type pendant l'édition
+  obj.type = t;
 
   if (t === "repeatable") {
     const name = (objNameInput?.value || "").trim();
@@ -1039,7 +1207,11 @@ if (createObjectiveBtn) createObjectiveBtn.onclick = async () => {
     if (!name) return uiAlert("Nom requis", "Objectifs");
     if (!Number.isFinite(xp) || xp <= 0) return uiAlert("XP invalide", "Objectifs");
 
-    w.objectives.push({ id, type: "repeatable", name, xp, doneCount: 0 });
+    obj.name = name;
+    obj.xp = xp;
+    obj.doneCount = obj.doneCount || 0;
+    obj.archived = !!obj.archived;
+
     if (objNameInput) objNameInput.value = "";
     if (objXpInput) objXpInput.value = "";
   }
@@ -1050,15 +1222,22 @@ if (createObjectiveBtn) createObjectiveBtn.onclick = async () => {
     if (!name) return uiAlert("Nom requis", "Objectifs");
     if (!Number.isFinite(xp) || xp <= 0) return uiAlert("XP invalide", "Objectifs");
 
-    w.objectives.push({ id, type: "unique", name, xp, done: false });
+    obj.name = name;
+    obj.xp = xp;
+    obj.done = !!obj.done;
+
     if (objNameUniqueInput) objNameUniqueInput.value = "";
     if (objXpUniqueInput) objXpUniqueInput.value = "";
   }
+  // fin édition
+  editingObjectiveId = null;
+  if (createObjectiveBtn) createObjectiveBtn.innerText = "Ajouter";
 
   save();
-  showPopup("🎯 Objectif ajouté");
+  showPopup(isEditing ? "📝 Objectif modifié" : "🎯 Objectif ajouté");
   renderObjectives();
 };
+
 
 async function validateObjective(objectiveId) {
   const w = state.worlds[state.activeWorldId];

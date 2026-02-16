@@ -756,3 +756,67 @@ input + label {
   display:none; /* garde ton hidden clean */
 }
 
+
+/* Objectifs - liste */
+.obj-section-title{
+  margin-top: 12px;
+  margin-bottom: 6px;
+  font-size: 14px;
+  opacity: .9;
+  font-weight: 800;
+}
+
+.obj-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--divider);
+}
+
+.obj-row:last-child{ border-bottom:none; }
+
+.obj-left{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+
+.obj-title{
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.obj-meta{
+  font-size: 12px;
+  opacity: .8;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+.obj-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.obj-check{
+  width: 22px;
+  height: 22px;
+}
+
+.obj-edit-btn{
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.10);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.obj-edit-btn:hover{ background: rgba(255,255,255,0.12); }
