@@ -65,15 +65,6 @@ body{
     linear-gradient(160deg, #3b0f4f, #1e1b4b);
 }
 
-.game {
-  padding: 16px;
-  max-width: 420px;
-  margin: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
 /* ================== TITRES ================== */
 h1, h2, h3 {
   text-align: center;
@@ -748,3 +739,10 @@ input + label {
 
 /* last safety */
 .hidden{ display:none !important; }
+
+/* Espace vertical entre blocs dans un écran */
+.stack{
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
