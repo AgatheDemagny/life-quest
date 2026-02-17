@@ -779,33 +779,76 @@ function renderObjectives() {
   const w = state.worlds[state.activeWorldId];
   if (!w || !objectivesListEl) return;
 
-  // on garde ton format tableau
   const list = Array.isArray(w.objectives) ? w.objectives : (w.objectives = []);
 
-  // séparations demandées
-  const enCours = list.filter(o => o.type === "unique" && !o.done);                 // uniques non cochés
-  const paliers = list.filter(o => o.type === "milestone" && !isMilestoneDone(o));  // paliers en cours
-  const repetables = list.filter(o => o.type === "repeatable");                     // toujours “actifs” (archivage via checkbox)
-  const archives = list.filter(o => isArchivedObjective(o));                        // cochés / finis
+  // uniques non faits
+  const enCours = list.filter(o => o.type === "unique" && !o.done);
+
+  // milestones encore actifs = au moins un step non fait
+  const paliers = list.filter(o => o.type === "milestone" && !isMilestoneAllDone(o));
+
+  // répétables (toujours visibles)
+  const repetables = list.filter(o => o.type === "repeatable");
+
+  // archivés = uniques faits + steps milestone faits
+  const archivedItems = [];
+
+  // uniques done
+  list.filter(o => o.type === "unique" && o.done).forEach(o => {
+    archivedItems.push({
+      kind: "unique",
+      id: o.id,
+      title: `${(o.name || "Objectif").trim()} (${Number(o.xp || 0)} XP)`,
+      xp: Number(o.xp || 0),
+      doneAt: o.doneAt || null,
+      undoable: canUndo(o.doneAt),
+      ref: o
+    });
+  });
+
+  // milestone steps done = une ligne par palier atteint
+  list.filter(o => o.type === "milestone").forEach(o => {
+    (o.steps || []).filter(s => s.done).forEach(s => {
+      const t = `🏅 ${o.prefix} ${s.count} ${o.suffix} (${Number(s.xp || 0)} XP)`;
+      archivedItems.push({
+        kind: "milestoneStep",
+        id: `${o.id}-${s.count}`,
+        title: t,
+        xp: Number(s.xp || 0),
+        doneAt: s.doneAt || null,
+        undoable: canUndo(s.doneAt),
+        ref: { obj: o, step: s }
+      });
+    });
+  });
+
+  // tri des archives par date desc
+  archivedItems.sort((a,b) => (b.doneAt||0) - (a.doneAt||0));
 
   objectivesListEl.innerHTML = "";
 
+  // Si aucun objectif du tout : uniquement le titre (donc rien ici)
   const nothing =
     enCours.length === 0 &&
     paliers.length === 0 &&
     repetables.length === 0 &&
-    archives.length === 0;
+    archivedItems.length === 0;
 
-  if (nothing) {
-    objectivesListEl.innerHTML = `<p class="hint">Aucun objectif pour l’instant.</p>`;
-    return;
-  }
+  if (nothing) return;
 
-  // Affiche seulement les titres non vides
-  addObjectiveSection("En cours", enCours, { showCheck: true, showEdit: true, archived: false });
-  addObjectiveSection("Palier", paliers, { showCheck: true, showEdit: true, archived: false });
-  addObjectiveSection("Répétables", repetables.filter(o => !o.archived), { showCheck: true, showEdit: true, archived: false });
-  addObjectiveSection("Archivés", archives, { showCheck: false, showEdit: true, archived: true });
+  addObjectiveSection("En cours", enCours, { mode: "uniqueActive" });
+  addObjectiveSection("Palier", paliers, { mode: "milestoneActive" });
+  addObjectiveSection("Répétables", repetables, { mode: "repeatable" });
+  addArchivedSection("Archivés", archivedItems);
+}
+
+function isMilestoneAllDone(obj){
+  const steps = obj.steps || [];
+  return steps.length > 0 && steps.every(s => s.done);
+}
+
+function getMilestoneNextStep(obj){
+  return (obj.steps || []).find(s => !s.done) || null;
 }
 
 function addObjectiveSection(title, items, opts){
@@ -816,7 +859,162 @@ function addObjectiveSection(title, items, opts){
   h.textContent = title;
   objectivesListEl.appendChild(h);
 
-  items.forEach(obj => objectivesListEl.appendChild(renderObjectiveRow(obj, opts)));
+  items.forEach(obj => objectivesListEl.appendChild(renderObjectiveRowV2(obj, opts)));
+}
+
+function addArchivedSection(title, items){
+  if (!items || items.length === 0) return;
+
+  const h = document.createElement("div");
+  h.className = "obj-section-title";
+  h.textContent = title;
+  objectivesListEl.appendChild(h);
+
+  items.forEach(item => objectivesListEl.appendChild(renderArchivedRow(item)));
+}
+
+function renderObjectiveRowV2(obj, opts){
+  const row = document.createElement("div");
+  row.className = "obj-row";
+
+  const left = document.createElement("div");
+  left.className = "obj-left";
+
+  // titre
+  const t = document.createElement("div");
+  t.className = "obj-title";
+
+  // meta
+  const meta = document.createElement("div");
+  meta.className = "obj-meta";
+
+  // actions
+  const actions = document.createElement("div");
+  actions.className = "obj-actions";
+
+  // bouton valider
+  const validateBtn = document.createElement("button");
+  validateBtn.className = "obj-edit-btn";
+  validateBtn.type = "button";
+  validateBtn.title = "Valider";
+  validateBtn.textContent = "✅";
+  validateBtn.onclick = () => validateObjective(obj.id);
+
+  // bouton modifier (pour plus tard on fera mieux, mais on le laisse)
+  const editBtn = document.createElement("button");
+  editBtn.className = "obj-edit-btn";
+  editBtn.type = "button";
+  editBtn.title = "Modifier";
+  editBtn.textContent = "🗒️";
+  editBtn.onclick = () => startEditObjective(obj);
+
+  // contenu selon type
+  if (opts.mode === "uniqueActive") {
+    t.textContent = `${(obj.name || "Objectif").trim()} (${Number(obj.xp || 0)} XP)`;
+  }
+
+  if (opts.mode === "repeatable") {
+    const n = Number(obj.doneCount || 0);
+    t.textContent = `${(obj.name || "Objectif").trim()} (${Number(obj.xp || 0)} XP)`;
+    meta.textContent = `${n} fois`;
+  }
+
+  if (opts.mode === "milestoneActive") {
+    const next = getMilestoneNextStep(obj);
+    const total = (obj.steps || []).length;
+    const done = (obj.steps || []).filter(s => s.done).length;
+    const current = Number(obj.progress || 0);
+
+    t.textContent = `🏅 ${obj.prefix} … ${obj.suffix} (${next ? Number(next.xp || 0) : 0} XP)`;
+
+    if (next) {
+      meta.textContent = `Progression ${current}/${next.count} • Paliers ${done}/${total}`;
+    } else {
+      meta.textContent = `Paliers ${done}/${total}`;
+    }
+  }
+
+  left.appendChild(t);
+  if (meta.textContent) left.appendChild(meta);
+
+  actions.appendChild(validateBtn);
+  actions.appendChild(editBtn);
+
+  row.appendChild(left);
+  row.appendChild(actions);
+  return row;
+}
+
+function renderArchivedRow(item){
+  const row = document.createElement("div");
+  row.className = "obj-row";
+
+  const left = document.createElement("div");
+  left.className = "obj-left";
+
+  const title = document.createElement("div");
+  title.className = "obj-title";
+  title.textContent = item.title;
+
+  const meta = document.createElement("div");
+  meta.className = "obj-meta";
+  meta.textContent = item.doneAt ? `✅ ${formatDateShort(item.doneAt)}` : "";
+
+  left.appendChild(title);
+  left.appendChild(meta);
+
+  const actions = document.createElement("div");
+  actions.className = "obj-actions";
+
+  // bouton undo (24h)
+  const undoBtn = document.createElement("button");
+  undoBtn.className = "obj-edit-btn";
+  undoBtn.type = "button";
+  undoBtn.title = item.undoable ? "Annuler (24h)" : "Annulation impossible (24h dépassées)";
+  undoBtn.textContent = "↩️";
+  undoBtn.disabled = !item.undoable;
+
+  undoBtn.onclick = async () => {
+    const ok = await uiConfirm("Annuler cette validation ?", "Archivés");
+    if (!ok) return;
+    undoArchivedItem(item);
+  };
+
+  actions.appendChild(undoBtn);
+
+  row.appendChild(left);
+  row.appendChild(actions);
+  return row;
+}
+
+function undoArchivedItem(item){
+  const w = state.worlds[state.activeWorldId];
+  if (!w) return;
+
+  // Unique : on remet done false
+  if (item.kind === "unique") {
+    const obj = item.ref;
+    obj.done = false;
+    obj.doneAt = null;
+    // ⚠️ pour l’instant on ne retire pas les XP (on peut l’ajouter après)
+    save();
+    renderObjectives();
+    return;
+  }
+
+  // Milestone step : on remet step.done = false et step.doneAt = null
+  if (item.kind === "milestoneStep") {
+    const obj = item.ref.obj;
+    const step = item.ref.step;
+    step.done = false;
+    step.doneAt = null;
+
+    // ⚠️ on ne touche pas à progress (car progress = nb de validations “livres”)
+    // sinon ça casserait ta logique compteur
+    save();
+    renderObjectives();
+    return;
+  }
 }
 
 function renderObjectiveRow(obj, opts){
@@ -980,6 +1178,16 @@ function formatDateTime(ts) {
 function canDeleteEntry(entry) {
   const ageMs = Date.now() - entry.createdAt;
   return ageMs <= 24 * 60 * 60 * 1000;
+}
+
+function canUndo(ts) {
+  if (!ts) return false;
+  return (Date.now() - ts) <= 24 * 60 * 60 * 1000;
+}
+
+function formatDateShort(ts){
+  if (!ts) return "";
+  return formatDateTime(ts); // tu as déjà une fonction propre
 }
 
 function renderEntries() {
@@ -1227,7 +1435,7 @@ if (createMilestoneObjectiveBtn) createMilestoneObjectiveBtn.onclick = async () 
     obj = (w.objectives || []).find(o => o.id === editingObjectiveId);
     if (!obj) { resetObjectiveForm(); return; }
   } else {
-    obj = { id: "obj-" + Date.now(), type: "milestone" };
+    obj = { id: "obj-" + Date.now(), type: "milestone", progress: 0 };
     w.objectives.push(obj);
   }
 
@@ -1240,7 +1448,13 @@ if (createMilestoneObjectiveBtn) createMilestoneObjectiveBtn.onclick = async () 
   obj.type = "milestone";
   obj.prefix = prefix;
   obj.suffix = suffix;
-  obj.steps = draftMilestoneSteps.map(s => ({ ...s }));
+  obj.progress = Number(obj.progress || 0); // compteur
+  obj.steps = draftMilestoneSteps.map(s => ({
+    count: Number(s.count),
+    xp: Number(s.xp),
+    done: !!s.done,
+    doneAt: s.done ? (s.doneAt || Date.now()) : null
+}));
 
   // reset
   if (milestonePrefixInput) milestonePrefixInput.value = "";
@@ -1304,6 +1518,7 @@ if (createObjectiveBtn) createObjectiveBtn.onclick = async () => {
     obj.name = name;
     obj.xp = xp;
     obj.done = !!obj.done;
+    obj.doneAt = obj.done ? (obj.doneAt || Date.now()) : null;
 
     if (objNameUniqueInput) objNameUniqueInput.value = "";
     if (objXpUniqueInput) objXpUniqueInput.value = "";
@@ -1339,21 +1554,43 @@ async function validateObjective(objectiveId) {
   if (obj.type === "unique") {
     if (obj.done) return;
     obj.done = true;
+    obj.doneAt = Date.now();
     save();
     addXp(w.id, obj.xp, "🎯 Objectif validé !");
     renderObjectives();
     return;
   }
 
-  if (obj.type === "milestone") {
-    const step = (obj.steps || []).find(s => !s.done);
-    if (!step) return;
-    step.done = true;
+if (obj.type === "milestone") {
+  if (!Array.isArray(obj.steps)) obj.steps = [];
+  obj.progress = Number(obj.progress || 0) + 1;
+
+  // palier suivant non atteint
+  const next = obj.steps.find(s => !s.done);
+  if (!next) {
+    // déjà fini
     save();
-    addXp(w.id, step.xp, "🎯 Palier validé !");
     renderObjectives();
     return;
   }
+
+  // si on vient d'atteindre (ou dépasser) ce palier
+  if (obj.progress >= Number(next.count || 0)) {
+    next.done = true;
+    next.doneAt = Date.now(); // ✅ date d’archivage du palier
+
+    save();
+    addXp(w.id, Number(next.xp || 0), "🏅 Palier atteint !");
+    renderObjectives();
+    return;
+  }
+
+  // sinon : juste progression, pas d’XP
+  save();
+  showPopup(`📚 Progression : ${obj.progress}`);
+  renderObjectives();
+  return;
+}
 }
 
 if (editSaveObjectiveBtn) editSaveObjectiveBtn.onclick = async () => {
