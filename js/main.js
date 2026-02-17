@@ -10,7 +10,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   const v = document.getElementById("appVersion");
-  if (v) v.textContent = "V1 - 16/02/2026";
+  if (v) v.textContent = "V1 - 17/02/2026";
 });
 
 // ================== Storage helpers ==================
@@ -289,6 +289,9 @@ const popupEl = el("popup");
 
 // quick world settings (future)
 const worldQuickSettingsBtn = el("worldQuickSettingsBtn");
+
+const editDeleteObjectiveBtn = el("editDeleteObjectiveBtn");
+if (editDeleteObjectiveBtn) editDeleteObjectiveBtn.onclick = () => deleteObjective(editingObjectiveId);
 
 // ================== UI helpers ==================
 function showScreen(which) {
@@ -570,6 +573,51 @@ function addXp(worldId, xp, reasonText) {
   renderWorldStats();
 }
 
+// ✅ XP OBJECTIFS : affecte seulement TOTAL (global + monde), pas week/month
+function addXpObjectiveOnly(worldId, xp, reasonText) {
+  const w = state.worlds[worldId];
+  if (!w) return;
+
+  const prevGlobalXp = state.global.totalXp;
+  const prevWorldXp = w.stats.totalXp;
+
+  state.global.totalXp += xp;
+  w.stats.totalXp += xp;
+
+  save();
+  showPopup(`${reasonText} +${xp} XP`);
+
+  // levels (inchangé)
+  const { prev: gPrev, now: gNow } = levelsGained(
+    prevGlobalXp, state.global.totalXp,
+    state.settings.levelBase, state.settings.levelGrowth
+  );
+  if (gNow > gPrev) showPopup(`🎉 Niveau global ${gNow} atteint !`);
+
+  const { prev: wPrev, now: wNow } = levelsGained(
+    prevWorldXp, w.stats.totalXp,
+    state.settings.levelBase, state.settings.levelGrowth
+  );
+  if (wNow > wPrev) showPopup(`⭐ Niveau ${wNow} atteint dans ${w.icon} ${w.name} !`);
+
+  renderHomeStats();
+  renderWorldStats();
+}
+
+function removeXpObjectiveOnly(worldId, xp, reasonText) {
+  const w = state.worlds[worldId];
+  if (!w) return;
+
+  state.global.totalXp = Math.max(0, (state.global.totalXp || 0) - xp);
+  w.stats.totalXp = Math.max(0, (w.stats.totalXp || 0) - xp);
+
+  save();
+  showPopup(`${reasonText} -${xp} XP`);
+
+  renderHomeStats();
+  renderWorldStats();
+}
+
 // ================== Rendering ==================
 function renderAfterAuth() {
   const user = (window.firebase && firebase.auth) ? firebase.auth().currentUser : null;
@@ -775,71 +823,54 @@ function renderWorldStats() {
   }
 }
 
-function renderObjectives() {
-  const w = state.worlds[state.activeWorldId];
-  if (!w || !objectivesListEl) return;
+function normalizeWorldObjectives(w){
+  if (!w) return;
+  if (!Array.isArray(w.objectives)) w.objectives = [];
 
-  const list = Array.isArray(w.objectives) ? w.objectives : (w.objectives = []);
+  w.objectives.forEach(o => {
+    if (!o || !o.type) return;
 
-  // uniques non faits
-  const enCours = list.filter(o => o.type === "unique" && !o.done);
+    // Repeatable: events = historique de validations (1 ligne par validation)
+    if (o.type === "repeatable") {
+      if (!Array.isArray(o.events)) o.events = [];
+      // migration ancienne donnée doneCount -> events (dates approximatives)
+      const n = Number(o.doneCount || 0);
+      if (n > 0 && o.events.length === 0) {
+        const now = Date.now();
+        for (let i = 0; i < n; i++) o.events.push({ ts: now, xp: Number(o.xp || 0) });
+      }
+      o.doneCount = o.events.length;
+    }
 
-  // milestones encore actifs = au moins un step non fait
-  const paliers = list.filter(o => o.type === "milestone" && !isMilestoneAllDone(o));
+    // Unique
+    if (o.type === "unique") {
+      o.done = !!o.done;
+      if (o.done && !o.doneAt) o.doneAt = Date.now();
+      if (!o.done) o.doneAt = null;
+    }
 
-  // répétables (toujours visibles)
-  const repetables = list.filter(o => o.type === "repeatable");
-
-  // archivés = uniques faits + steps milestone faits
-  const archivedItems = [];
-
-  // uniques done
-  list.filter(o => o.type === "unique" && o.done).forEach(o => {
-    archivedItems.push({
-      kind: "unique",
-      id: o.id,
-      title: `${(o.name || "Objectif").trim()} (${Number(o.xp || 0)} XP)`,
-      xp: Number(o.xp || 0),
-      doneAt: o.doneAt || null,
-      undoable: canUndo(o.doneAt),
-      ref: o
-    });
-  });
-
-  // milestone steps done = une ligne par palier atteint
-  list.filter(o => o.type === "milestone").forEach(o => {
-    (o.steps || []).filter(s => s.done).forEach(s => {
-      const t = `🏅 ${o.prefix} ${s.count} ${o.suffix} (${Number(s.xp || 0)} XP)`;
-      archivedItems.push({
-        kind: "milestoneStep",
-        id: `${o.id}-${s.count}`,
-        title: t,
+    // Milestone
+    if (o.type === "milestone") {
+      if (!Array.isArray(o.steps)) o.steps = [];
+      o.progress = Number(o.progress || 0);
+      if (!Array.isArray(o.progressEvents)) o.progressEvents = []; // chaque validation +1 (même sans XP)
+      // sécurité types
+      o.steps = o.steps.map(s => ({
+        count: Number(s.count || 0),
         xp: Number(s.xp || 0),
-        doneAt: s.doneAt || null,
-        undoable: canUndo(s.doneAt),
-        ref: { obj: o, step: s }
-      });
-    });
+        done: !!s.done,
+        doneAt: s.done ? (s.doneAt || Date.now()) : null
+      }));
+      o.steps.sort((a,b) => a.count - b.count);
+    }
   });
+}
 
-  // tri des archives par date desc
-  archivedItems.sort((a,b) => (b.doneAt||0) - (a.doneAt||0));
-
-  objectivesListEl.innerHTML = "";
-
-  // Si aucun objectif du tout : uniquement le titre (donc rien ici)
-  const nothing =
-    enCours.length === 0 &&
-    paliers.length === 0 &&
-    repetables.length === 0 &&
-    archivedItems.length === 0;
-
-  if (nothing) return;
-
-  addObjectiveSection("En cours", enCours, { mode: "uniqueActive" });
-  addObjectiveSection("Palier", paliers, { mode: "milestoneActive" });
-  addObjectiveSection("Répétables", repetables, { mode: "repeatable" });
-  addArchivedSection("Archivés", archivedItems);
+function getObjectiveIcon(type){
+  if (type === "unique") return "⭐";
+  if (type === "repeatable") return "🔁";
+  if (type === "milestone") return "🏅";
+  return "🎯";
 }
 
 function isMilestoneAllDone(obj){
@@ -851,7 +882,100 @@ function getMilestoneNextStep(obj){
   return (obj.steps || []).find(s => !s.done) || null;
 }
 
-function addObjectiveSection(title, items, opts){
+// ✅ 2 sections seulement : En cours / Archivés
+function renderObjectives() {
+  const w = state.worlds[state.activeWorldId];
+  if (!w || !objectivesListEl) return;
+
+  normalizeWorldObjectives(w);
+
+  const list = w.objectives;
+
+  // EN COURS
+  const inProgress = [];
+  list.forEach(o => {
+    if (!o) return;
+
+    if (o.type === "unique" && !o.done) inProgress.push(o);
+    if (o.type === "repeatable") inProgress.push(o);
+    if (o.type === "milestone" && !isMilestoneAllDone(o)) inProgress.push(o);
+  });
+
+  // ARCHIVÉS (items flatten)
+  const archived = [];
+
+  // uniques validés
+  list.filter(o => o.type === "unique" && o.done).forEach(o => {
+    archived.push({
+      kind: "uniqueDone",
+      id: o.id,
+      icon: "⭐",
+      title: `${(o.name || "Objectif").trim()} (${Number(o.xp || 0)} XP)`,
+      xp: Number(o.xp || 0),
+      ts: o.doneAt || null,
+      undoable: canUndo(o.doneAt),
+      ref: { obj: o }
+    });
+  });
+
+  // répétables : 1 ligne par validation
+  list.filter(o => o.type === "repeatable").forEach(o => {
+    const events = Array.isArray(o.events) ? o.events : [];
+    if (events.length === 0) return;
+
+    events.forEach((ev, idx) => {
+      const n = idx + 1;
+      const isLast = idx === events.length - 1;
+
+      archived.push({
+        kind: "repeatableEvent",
+        id: `${o.id}-ev-${idx}`,
+        icon: "🔁",
+        title: `${(o.name || "Objectif").trim()} (${Number(o.xp || 0)} XP) • +1 (x${n})`,
+        xp: Number(ev.xp || o.xp || 0),
+        ts: ev.ts || null,
+        undoable: isLast && canUndo(ev.ts),
+        ref: { obj: o }
+      });
+    });
+  });
+
+  // paliers atteints : 1 ligne par palier validé
+  list.filter(o => o.type === "milestone").forEach(o => {
+    const doneSteps = (o.steps || []).filter(s => s.done);
+    if (doneSteps.length === 0) return;
+
+    // undo uniquement sur le dernier palier atteint (sinon incohérences)
+    const lastTs = Math.max(...doneSteps.map(s => Number(s.doneAt || 0)));
+
+    doneSteps.forEach(s => {
+      archived.push({
+        kind: "milestoneStep",
+        id: `${o.id}-step-${s.count}`,
+        icon: "🏅",
+        title: `${(o.prefix || "").trim()} ${s.count} ${(o.suffix || "").trim()} (${Number(s.xp || 0)} XP)`,
+        xp: Number(s.xp || 0),
+        ts: s.doneAt || null,
+        undoable: (s.doneAt === lastTs) && canUndo(s.doneAt),
+        ref: { obj: o, step: s }
+      });
+    });
+  });
+
+  // tri des archives par date desc
+  archived.sort((a,b) => (Number(b.ts||0) - Number(a.ts||0)));
+
+  // RENDER
+  objectivesListEl.innerHTML = "";
+
+  // Si rien : tu voulais "juste le titre Objectifs" => donc on n’affiche rien ici
+  if (inProgress.length === 0 && archived.length === 0) return;
+
+  renderObjectivesSection("Objectifs en cours", inProgress);
+  renderArchivedSection("Objectifs archivés", archived);
+}
+
+function renderObjectivesSection(title, items){
   if (!items || items.length === 0) return;
 
   const h = document.createElement("div");
@@ -859,10 +983,10 @@ function addObjectiveSection(title, items, opts){
   h.textContent = title;
   objectivesListEl.appendChild(h);
 
-  items.forEach(obj => objectivesListEl.appendChild(renderObjectiveRowV2(obj, opts)));
+  items.forEach(o => objectivesListEl.appendChild(renderInProgressRow(o)));
 }
 
-function addArchivedSection(title, items){
+function renderArchivedSection(title, items){
   if (!items || items.length === 0) return;
 
   const h = document.createElement("div");
@@ -873,69 +997,51 @@ function addArchivedSection(title, items){
   items.forEach(item => objectivesListEl.appendChild(renderArchivedRow(item)));
 }
 
-function renderObjectiveRowV2(obj, opts){
+function renderInProgressRow(obj){
   const row = document.createElement("div");
   row.className = "obj-row";
 
   const left = document.createElement("div");
   left.className = "obj-left";
 
-  // titre
-  const t = document.createElement("div");
-  t.className = "obj-title";
+  const title = document.createElement("div");
+  title.className = "obj-title";
 
-  // meta
-  const meta = document.createElement("div");
-  meta.className = "obj-meta";
+  const icon = getObjectiveIcon(obj.type);
 
-  // actions
+  if (obj.type === "unique") {
+    title.textContent = `${icon} ${(obj.name || "Objectif").trim()} (${Number(obj.xp || 0)} XP)`;
+  }
+
+  if (obj.type === "repeatable") {
+    title.textContent = `${icon} ${(obj.name || "Objectif").trim()} (${Number(obj.xp || 0)} XP)`;
+  }
+
+  if (obj.type === "milestone") {
+    const next = getMilestoneNextStep(obj);
+    const xp = next ? Number(next.xp || 0) : 0;
+    title.textContent = `${icon} ${(obj.prefix || "").trim()} … ${(obj.suffix || "").trim()} (${xp} XP)`;
+  }
+
+  left.appendChild(title);
+
   const actions = document.createElement("div");
   actions.className = "obj-actions";
 
-  // bouton valider
+  // ✅ icônes sans gros carré : on garde juste un bouton minimal
   const validateBtn = document.createElement("button");
-  validateBtn.className = "obj-edit-btn";
+  validateBtn.className = "obj-icon";
   validateBtn.type = "button";
   validateBtn.title = "Valider";
   validateBtn.textContent = "✅";
   validateBtn.onclick = () => validateObjective(obj.id);
 
-  // bouton modifier (pour plus tard on fera mieux, mais on le laisse)
   const editBtn = document.createElement("button");
-  editBtn.className = "obj-edit-btn";
+  editBtn.className = "obj-icon";
   editBtn.type = "button";
   editBtn.title = "Modifier";
-  editBtn.textContent = "🗒️";
+  editBtn.textContent = "✏️";
   editBtn.onclick = () => startEditObjective(obj);
-
-  // contenu selon type
-  if (opts.mode === "uniqueActive") {
-    t.textContent = `${(obj.name || "Objectif").trim()} (${Number(obj.xp || 0)} XP)`;
-  }
-
-  if (opts.mode === "repeatable") {
-    const n = Number(obj.doneCount || 0);
-    t.textContent = `${(obj.name || "Objectif").trim()} (${Number(obj.xp || 0)} XP)`;
-    meta.textContent = `${n} fois`;
-  }
-
-  if (opts.mode === "milestoneActive") {
-    const next = getMilestoneNextStep(obj);
-    const total = (obj.steps || []).length;
-    const done = (obj.steps || []).filter(s => s.done).length;
-    const current = Number(obj.progress || 0);
-
-    t.textContent = `🏅 ${obj.prefix} … ${obj.suffix} (${next ? Number(next.xp || 0) : 0} XP)`;
-
-    if (next) {
-      meta.textContent = `Progression ${current}/${next.count} • Paliers ${done}/${total}`;
-    } else {
-      meta.textContent = `Paliers ${done}/${total}`;
-    }
-  }
-
-  left.appendChild(t);
-  if (meta.textContent) left.appendChild(meta);
 
   actions.appendChild(validateBtn);
   actions.appendChild(editBtn);
@@ -954,11 +1060,11 @@ function renderArchivedRow(item){
 
   const title = document.createElement("div");
   title.className = "obj-title";
-  title.textContent = item.title;
+  title.textContent = `${item.icon} ${item.title}`;
 
   const meta = document.createElement("div");
   meta.className = "obj-meta";
-  meta.textContent = item.doneAt ? `✅ ${formatDateShort(item.doneAt)}` : "";
+  meta.textContent = item.ts ? `✅ ${formatDateShort(item.ts)}` : "";
 
   left.appendChild(title);
   left.appendChild(meta);
@@ -966,19 +1072,14 @@ function renderArchivedRow(item){
   const actions = document.createElement("div");
   actions.className = "obj-actions";
 
-  // bouton undo (24h)
   const undoBtn = document.createElement("button");
-  undoBtn.className = "obj-edit-btn";
+  undoBtn.className = "obj-icon";
   undoBtn.type = "button";
-  undoBtn.title = item.undoable ? "Annuler (24h)" : "Annulation impossible (24h dépassées)";
+  undoBtn.title = item.undoable ? "Annuler (24h)" : "Annulation impossible";
   undoBtn.textContent = "↩️";
   undoBtn.disabled = !item.undoable;
 
-  undoBtn.onclick = async () => {
-    const ok = await uiConfirm("Annuler cette validation ?", "Archivés");
-    if (!ok) return;
-    undoArchivedItem(item);
-  };
+  undoBtn.onclick = () => undoArchivedItem(item);
 
   actions.appendChild(undoBtn);
 
@@ -987,161 +1088,87 @@ function renderArchivedRow(item){
   return row;
 }
 
-function undoArchivedItem(item){
+async function undoArchivedItem(item){
   const w = state.worlds[state.activeWorldId];
   if (!w) return;
 
-  // Unique : on remet done false
-  if (item.kind === "unique") {
-    const obj = item.ref;
+  if (!item.undoable) {
+    await uiAlert("Tu ne peux annuler que pendant 24h.", "Archivés");
+    return;
+  }
+
+  const ok = await uiConfirm("Annuler cette validation ?", "Archivés");
+  if (!ok) return;
+
+  // UNIQUE
+  if (item.kind === "uniqueDone") {
+    const obj = item.ref.obj;
     obj.done = false;
     obj.doneAt = null;
-    // ⚠️ pour l’instant on ne retire pas les XP (on peut l’ajouter après)
+
+    removeXpObjectiveOnly(w.id, Number(item.xp || 0), "↩️ Annulation");
     save();
     renderObjectives();
     return;
   }
 
-  // Milestone step : on remet step.done = false et step.doneAt = null
+  // RÉPÉTABLE : annule seulement la DERNIÈRE validation
+  if (item.kind === "repeatableEvent") {
+    const obj = item.ref.obj;
+    obj.events = Array.isArray(obj.events) ? obj.events : [];
+    if (obj.events.length === 0) return;
+
+    const last = obj.events[obj.events.length - 1];
+    if (!canUndo(last.ts)) return;
+
+    obj.events.pop();
+    obj.doneCount = obj.events.length;
+
+    removeXpObjectiveOnly(w.id, Number(last.xp || obj.xp || 0), "↩️ Annulation");
+    save();
+    renderObjectives();
+    return;
+  }
+
+  // PALIER : annule seulement le DERNIER palier atteint (cohérence)
   if (item.kind === "milestoneStep") {
     const obj = item.ref.obj;
     const step = item.ref.step;
+
+    // sécurité : ne pas casser si ce n'est pas le dernier step atteint
+    const doneSteps = (obj.steps || []).filter(s => s.done);
+    const lastTs = Math.max(...doneSteps.map(s => Number(s.doneAt || 0)));
+    if (Number(step.doneAt || 0) !== Number(lastTs || 0)) return;
+
+    // on retire 1 validation de progression (celle qui a déclenché ce palier)
+    obj.progress = Math.max(0, Number(obj.progress || 0) - 1);
+    if (Array.isArray(obj.progressEvents) && obj.progressEvents.length) {
+      obj.progressEvents.pop();
+    }
+
     step.done = false;
     step.doneAt = null;
 
-    // ⚠️ on ne touche pas à progress (car progress = nb de validations “livres”)
-    // sinon ça casserait ta logique compteur
+    removeXpObjectiveOnly(w.id, Number(step.xp || 0), "↩️ Annulation");
     save();
     renderObjectives();
     return;
   }
-}
-
-function renderObjectiveRow(obj, opts){
-  const row = document.createElement("div");
-  row.className = "obj-row";
-
-  const left = document.createElement("div");
-  left.className = "obj-left";
-
-  // checkbox (pas sur archivés)
-  if (opts.showCheck) {
-    const check = document.createElement("input");
-    check.type = "checkbox";
-    check.className = "obj-check";
-
-    // état checkbox selon type
-    check.checked = isArchivedObjective(obj);
-
-    check.onchange = () => {
-      // unique : check => done true/false
-      if (obj.type === "unique") {
-        obj.done = check.checked;
-      }
-      // milestone : check => finit tous les steps / ou réactive (remet tout à false)
-      else if (obj.type === "milestone") {
-        if (check.checked) {
-          (obj.steps || []).forEach(s => s.done = true);
-        } else {
-          (obj.steps || []).forEach(s => s.done = false);
-        }
-      }
-      // repeatable : on archive via une propriété dédiée
-      else if (obj.type === "repeatable") {
-        obj.archived = check.checked;
-      }
-
-      save();
-      renderObjectives();
-    };
-
-    left.appendChild(check);
-  }
-
-  const title = document.createElement("div");
-  title.className = "obj-title";
-  title.textContent = `${getObjectiveTitle(obj)} (${getObjectiveXpText(obj)})`;
-  left.appendChild(title);
-
-  const metaText = getObjectiveMetaText(obj);
-  if (metaText) {
-    const meta = document.createElement("div");
-    meta.className = "obj-meta";
-    meta.textContent = metaText;
-    left.appendChild(meta);
-  }
-
-  const actions = document.createElement("div");
-  actions.className = "obj-actions";
-
-  const editBtn = document.createElement("button");
-  editBtn.className = "obj-edit-btn";
-  editBtn.type = "button";
-  editBtn.title = "Modifier";
-  editBtn.textContent = "🗒️";
-  editBtn.onclick = () => startEditObjective(obj);
-  actions.appendChild(editBtn);
-
-  row.appendChild(left);
-  row.appendChild(actions);
-  return row;
-}
-
-function getObjectiveTitle(obj){
-  if (obj.type === "milestone") {
-    // exemple: "Lire X livres" -> on garde prefix/suffix sans mettre le X ici
-    return `${obj.prefix} … ${obj.suffix}`.trim();
-  }
-  return (obj.name || "Objectif").trim();
-}
-
-function isMilestoneDone(obj){
-  const steps = obj.steps || [];
-  return steps.length > 0 && steps.every(s => s.done);
-}
-
-function isArchivedObjective(obj){
-  if (obj.type === "unique") return !!obj.done;
-  if (obj.type === "milestone") return isMilestoneDone(obj);
-  if (obj.type === "repeatable") return !!obj.archived;
-  return false;
-}
-
-function getObjectiveXpText(obj){
-  if (obj.type === "milestone") {
-    // XP du prochain palier (ou 0 si fini)
-    const step = (obj.steps || []).find(s => !s.done);
-    return step ? `${step.xp} XP` : `0 XP`;
-  }
-  // unique / repeatable
-  return `${Number(obj.xp || 0)} XP`;
-}
-
-function getObjectiveMetaText(obj){
-  if (obj.type === "milestone") {
-    const steps = obj.steps || [];
-    const done = steps.filter(s => s.done).length;
-    const total = steps.length;
-    if (total > 0) return `Palier ${Math.min(done + 1, total)}/${total}`;
-    return "";
-  }
-  if (obj.type === "repeatable") {
-    const n = Number(obj.doneCount || 0);
-    return `${n} fois`;
-  }
-  return "";
 }
 
 function startEditObjective(obj){
   editingObjectiveId = obj.id;
 
+  // 🔒 type non modifiable
+  if (editObjectiveTypeSelect) {
+    editObjectiveTypeSelect.value = obj.type || "repeatable";
+    editObjectiveTypeSelect.disabled = true;
+  }
+  refreshEditObjectiveTypeUI();
+
   if (editObjectiveTitle) {
     editObjectiveTitle.textContent = `Modifier l’objectif`;
   }
-
-  // type
-  if (editObjectiveTypeSelect) editObjectiveTypeSelect.value = obj.type || "repeatable";
-  refreshEditObjectiveTypeUI();
 
   // reset champs
   if (editObjNameInput) editObjNameInput.value = "";
@@ -1155,18 +1182,24 @@ function startEditObjective(obj){
 
   // pré-remplir selon type
   if (obj.type === "repeatable") {
-    if (editObjNameInput) editObjNameInput.value = obj.name || "";
-    if (editObjXpInput) editObjXpInput.value = obj.xp ?? "";
-  } else if (obj.type === "unique") {
-    if (editObjNameUniqueInput) editObjNameUniqueInput.value = obj.name || "";
-    if (editObjXpUniqueInput) editObjXpUniqueInput.value = obj.xp ?? "";
-  } else if (obj.type === "milestone") {
-    if (editMilestonePrefixInput) editMilestonePrefixInput.value = obj.prefix || "";
-    if (editMilestoneSuffixInput) editMilestoneSuffixInput.value = obj.suffix || "";
-    editDraftMilestoneSteps = (obj.steps || []).map(s => ({ ...s }));
-    renderEditMilestonePreview();
+    if (editObjNameInput) { editObjNameInput.value = obj.name || ""; editObjNameInput.disabled = true; }
+    if (editObjXpInput)   { editObjXpInput.value = obj.xp ?? ""; editObjXpInput.disabled = false; }
   }
 
+  if (obj.type === "unique") {
+    if (editObjNameUniqueInput) { editObjNameUniqueInput.value = obj.name || ""; editObjNameUniqueInput.disabled = true; }
+    if (editObjXpUniqueInput)   { editObjXpUniqueInput.value = obj.xp ?? ""; editObjXpUniqueInput.disabled = false; }
+  }
+
+  if (obj.type === "milestone") {
+    if (editMilestonePrefixInput) { editMilestonePrefixInput.value = obj.prefix || ""; editMilestonePrefixInput.disabled = true; }
+    if (editMilestoneSuffixInput) { editMilestoneSuffixInput.value = obj.suffix || ""; editMilestoneSuffixInput.disabled = true; }
+
+    // ✅ seulement les paliers NON validés
+    const nonDone = (obj.steps || []).filter(s => !s.done).map(s => ({ ...s, done:false, doneAt:null }));
+    editDraftMilestoneSteps = nonDone;
+    renderEditMilestonePreview();
+  }
   openEditObjectiveModal();
 }
 
@@ -1229,6 +1262,25 @@ function renderEntries() {
     row.appendChild(del);
     entriesListEl.appendChild(row);
   });
+}
+
+async function deleteObjective(objectiveId){
+  const w = state.worlds[state.activeWorldId];
+  if (!w) return;
+
+  const obj = (w.objectives || []).find(o => o.id === objectiveId);
+  if (!obj) return;
+
+  const ok = await uiConfirm("Supprimer définitivement cet objectif ?", "Supprimer objectif");
+  if (!ok) return;
+
+  // on ne recalcul pas les XP historiques ici (sinon gros chantier)
+  // -> on supprime juste l’objectif et son historique d’affichage
+  w.objectives = (w.objectives || []).filter(o => o.id !== objectiveId);
+
+  save();
+  closeEditObjectiveModal();
+  renderObjectives();
 }
 
 async function deleteEntry(entryId) {
@@ -1544,50 +1596,58 @@ async function validateObjective(objectiveId) {
   if (!ok) return;
 
   if (obj.type === "repeatable") {
-    obj.doneCount = (obj.doneCount || 0) + 1;
-    save();
-    addXp(w.id, obj.xp, "🎯 Objectif validé !");
-    renderObjectives();
-    return;
-  }
+  obj.events = Array.isArray(obj.events) ? obj.events : [];
+  const ts = Date.now();
+  obj.events.push({ ts, xp: Number(obj.xp || 0) });
+  obj.doneCount = obj.events.length;
 
-  if (obj.type === "unique") {
-    if (obj.done) return;
-    obj.done = true;
-    obj.doneAt = Date.now();
-    save();
-    addXp(w.id, obj.xp, "🎯 Objectif validé !");
-    renderObjectives();
-    return;
-  }
+  save();
+  addXpObjectiveOnly(w.id, Number(obj.xp || 0), "🎯 Objectif validé !");
+  renderObjectives();
+  return;
+}
+
+if (obj.type === "unique") {
+  if (obj.done) return;
+  obj.done = true;
+  obj.doneAt = Date.now();
+
+  save();
+  addXpObjectiveOnly(w.id, Number(obj.xp || 0), "🎯 Objectif validé !");
+  renderObjectives();
+  return;
+}
 
 if (obj.type === "milestone") {
   if (!Array.isArray(obj.steps)) obj.steps = [];
-  obj.progress = Number(obj.progress || 0) + 1;
+  obj.progress = Number(obj.progress || 0);
+  obj.progressEvents = Array.isArray(obj.progressEvents) ? obj.progressEvents : [];
 
-  // palier suivant non atteint
+  // +1 “livre”
+  const ts = Date.now();
+  obj.progress += 1;
+  obj.progressEvents.push({ ts });
+
   const next = obj.steps.find(s => !s.done);
   if (!next) {
-    // déjà fini
     save();
     renderObjectives();
     return;
   }
 
-  // si on vient d'atteindre (ou dépasser) ce palier
+  // palier atteint ?
   if (obj.progress >= Number(next.count || 0)) {
     next.done = true;
-    next.doneAt = Date.now(); // ✅ date d’archivage du palier
+    next.doneAt = ts;
 
     save();
-    addXp(w.id, Number(next.xp || 0), "🏅 Palier atteint !");
+    addXpObjectiveOnly(w.id, Number(next.xp || 0), "🏅 Palier atteint !");
     renderObjectives();
     return;
   }
 
-  // sinon : juste progression, pas d’XP
   save();
-  showPopup(`📚 Progression : ${obj.progress}`);
+  showPopup(`📚 Progression : ${obj.progress}/${next.count}`);
   renderObjectives();
   return;
 }
@@ -1600,34 +1660,26 @@ if (editSaveObjectiveBtn) editSaveObjectiveBtn.onclick = async () => {
   const obj = (w.objectives || []).find(o => o.id === editingObjectiveId);
   if (!obj) return;
 
-  const t = editObjectiveTypeSelect?.value || obj.type;
-  obj.type = t;
+  const t = obj.type; // 🔒 type verrouillé
 
   if (t === "repeatable") {
-    const name = (editObjNameInput?.value || "").trim();
     const xp = parseInt(editObjXpInput?.value || "", 10);
-    if (!name) return uiAlert("Nom requis", "Modifier objectif");
     if (!Number.isFinite(xp) || xp <= 0) return uiAlert("XP invalide", "Modifier objectif");
-
-    obj.name = name;
     obj.xp = xp;
   }
 
   if (t === "unique") {
-    const name = (editObjNameUniqueInput?.value || "").trim();
     const xp = parseInt(editObjXpUniqueInput?.value || "", 10);
-    if (!name) return uiAlert("Nom requis", "Modifier objectif");
     if (!Number.isFinite(xp) || xp <= 0) return uiAlert("XP invalide", "Modifier objectif");
-
-    obj.name = name;
     obj.xp = xp;
   }
 
-  save();
-  showPopup("📝 Objectif modifié");
-  closeEditObjectiveModal();
-  renderObjectives();
-};
+
+    save();
+    showPopup("📝 Objectif modifié");
+    closeEditObjectiveModal();
+    renderObjectives();
+  };
 
 if (editAddMilestoneStepBtn) editAddMilestoneStepBtn.onclick = async () => {
   const count = parseInt(editMilestoneCountInput?.value || "", 10);
@@ -1661,7 +1713,21 @@ if (editSaveMilestoneBtn) editSaveMilestoneBtn.onclick = async () => {
   obj.type = "milestone";
   obj.prefix = prefix;
   obj.suffix = suffix;
-  obj.steps = editDraftMilestoneSteps.map(s => ({ ...s }));
+  const doneSteps = (obj.steps || []).filter(s => s.done); // on garde les validés
+  const newNonDone = editDraftMilestoneSteps.map(s => ({
+    count: Number(s.count || 0),
+    xp: Number(s.xp || 0),
+    done: false,
+    doneAt: null
+  }));
+
+  // sécurité : les nouveaux paliers doivent être > dernier palier validé
+  const lastDoneCount = doneSteps.length ? Math.max(...doneSteps.map(s => Number(s.count || 0))) : 0;
+  if (newNonDone.some(s => s.count <= lastDoneCount)) {
+    return uiAlert(`Tes nouveaux paliers doivent être > ${lastDoneCount}.`, "Modifier objectif");
+  }
+
+  obj.steps = [...doneSteps, ...newNonDone].sort((a,b) => a.count - b.count);
 
   save();
   showPopup("📝 Objectif palier modifié");
