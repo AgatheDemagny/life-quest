@@ -234,7 +234,7 @@
         <div id="editObjectiveModal" class="modal hidden" role="dialog" aria-modal="true" aria-hidden="true">
           <div class="modal-content card">
             <h3 id="editObjectiveTitle">Modifier l’objectif</h3>
-
+            <div id="editObjectiveInfo" class="hint" style="margin-bottom:10px;"></div>
             <label>Type</label>
             <select id="editObjectiveTypeSelect">
               <option value="repeatable">🔁 Répétable</option>
@@ -275,13 +275,13 @@
 
               <button id="editSaveMilestoneBtn">Enregistrer l’objectif palier</button>
             </div>
-            <button id="editDeleteObjectiveBtn" class="danger-btn btn-block" type="button">
-              🗑️ Supprimer l’objectif
-            </button>
             <div class="actions">
               <button id="editSaveObjectiveBtn">Enregistrer</button>
               <button id="editCancelObjectiveBtn" class="ghost" type="button">Annuler</button>
             </div>
+            <button id="editDeleteObjectiveBtn" class="danger-btn btn-block" type="button">
+              🗑️ Supprimer l’objectif
+            </button>
           </div>
         </div>
 
@@ -394,6 +394,7 @@
 
       <div class="actions">
         <button id="dialogCancelBtn" class="ghost" type="button">Annuler</button>
+        <button id="dialogAltBtn" class="ghost" type="button" style="display:none;"></button>
         <button id="dialogOkBtn" type="button">Confirmer</button>
       </div>
     </div>

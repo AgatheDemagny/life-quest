@@ -787,7 +787,7 @@ input + label {
 
 .obj-title{
   font-weight: 700;
-  white-space: nowrap;
+  white-space: normal;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -843,5 +843,11 @@ input + label {
   opacity: 0.35;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+/* Milestone: espace au-dessus du sous-bloc "paliers" */
+#objectiveFieldsMilestone .card.subtle,
+#editObjectiveFieldsMilestone .card.subtle{
+  margin-top: 12px;
 }
 

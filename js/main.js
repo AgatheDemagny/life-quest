@@ -278,6 +278,7 @@ const editMilestoneStepsPreview = el("editMilestoneStepsPreview");
 const editSaveObjectiveBtn = el("editSaveObjectiveBtn");
 const editSaveMilestoneBtn = el("editSaveMilestoneBtn");
 const editCancelObjectiveBtn = el("editCancelObjectiveBtn");
+const editObjectiveInfo = el("editObjectiveInfo");
 
 // popup
 const popupEl = el("popup");
@@ -460,6 +461,7 @@ function closeEditObjectiveModal(){
   editingObjectiveId = null;
   editDraftMilestoneSteps = [];
   renderEditMilestonePreview();
+  if (editObjectiveInfo) editObjectiveInfo.textContent = "";
 }
 
 function refreshEditObjectiveTypeUI(){
@@ -884,12 +886,13 @@ function renderObjectives() {
 
   normalizeWorldObjectives(w);
 
-  const list = w.objectives;
+  const list = w.objectives || [];
 
   // EN COURS
   const inProgress = [];
   list.forEach(o => {
     if (!o) return;
+    if (o.deleted) return; // ✅ ici (pas avant la boucle)
 
     if (o.type === "unique" && !o.done) inProgress.push(o);
     if (o.type === "repeatable") inProgress.push(o);
@@ -905,7 +908,7 @@ function renderObjectives() {
       kind: "uniqueDone",
       id: o.id,
       icon: "⭐",
-      title: `${(o.name || "Objectif").trim()} (${Number(o.xp || 0)} XP)`,
+      title: `${(o.name || "Objectif").trim()}`,
       xp: Number(o.xp || 0),
       ts: o.doneAt || null,
       undoable: canUndo(o.doneAt),
@@ -926,8 +929,8 @@ function renderObjectives() {
         kind: "repeatableEvent",
         id: `${o.id}-ev-${idx}`,
         icon: "🔁",
-        title: `${(o.name || "Objectif").trim()} (${Number(o.xp || 0)} XP) • +1 (x${n})`,
-        xp: Number(ev.xp || o.xp || 0),
+        title: `${(o.name || "Objectif").trim()} • x${n}`,
+        xp: Number(ev.xp || 0),
         ts: ev.ts || null,
         undoable: isLast && canUndo(ev.ts),
         ref: { obj: o }
@@ -948,7 +951,7 @@ function renderObjectives() {
         kind: "milestoneStep",
         id: `${o.id}-step-${s.count}`,
         icon: "🏅",
-        title: `${(o.prefix || "").trim()} ${s.count} ${(o.suffix || "").trim()} (${Number(s.xp || 0)} XP)`,
+        title: `${(o.prefix || "").trim()} ${s.count} ${(o.suffix || "").trim()}`,
         xp: Number(s.xp || 0),
         ts: s.doneAt || null,
         undoable: (s.doneAt === lastTs) && canUndo(s.doneAt),
@@ -1005,20 +1008,29 @@ function renderInProgressRow(obj){
   const icon = getObjectiveIcon(obj.type);
 
   if (obj.type === "unique") {
-    title.textContent = `${icon} ${(obj.name || "Objectif").trim()} (${Number(obj.xp || 0)} XP)`;
+    title.textContent = `${icon} ${(obj.name || "Objectif").trim()}`;
+    const xp = Number(obj.xp || 0);
+    xpLine.textContent = `${xp} XP`;
   }
 
   if (obj.type === "repeatable") {
-    title.textContent = `${icon} ${(obj.name || "Objectif").trim()} (${Number(obj.xp || 0)} XP)`;
+  title.textContent = `${icon} ${(obj.name || "Objectif").trim()}`;
+  const xp = Number(obj.xp || 0);
+  xpLine.textContent = `${xp} XP`;
   }
 
   if (obj.type === "milestone") {
-    const next = getMilestoneNextStep(obj);
-    const xp = next ? Number(next.xp || 0) : 0;
-    title.textContent = `${icon} ${(obj.prefix || "").trim()} … ${(obj.suffix || "").trim()} (${xp} XP)`;
+  const next = getMilestoneNextStep(obj);
+  const xp = next ? Number(next.xp || 0) : 0;
+  title.textContent = `${icon} ${(obj.prefix || "").trim()} … ${(obj.suffix || "").trim()}`;
+  xpLine.textContent = `${xp} XP`;
   }
 
   left.appendChild(title);
+
+  const xpLine = document.createElement("div");
+  xpLine.className = "obj-meta";
+  left.appendChild(xpLine);
 
   const actions = document.createElement("div");
   actions.className = "obj-actions";
@@ -1061,7 +1073,11 @@ function renderArchivedRow(item){
   meta.className = "obj-meta";
   meta.textContent = item.ts ? `✅ ${formatDateShort(item.ts)}` : "";
 
+  const xpLine = document.createElement("div");
+  xpLine.className = "obj-meta";
+  xpLine.textContent = `${Number(item.xp || 0)} XP`;
   left.appendChild(title);
+  left.appendChild(xpLine);
   left.appendChild(meta);
 
   const actions = document.createElement("div");
@@ -1195,6 +1211,19 @@ function startEditObjective(obj){
     editDraftMilestoneSteps = nonDone;
     renderEditMilestonePreview();
   }
+  // Infos non modifiables (affichées hors champs)
+  if (editObjectiveInfo) {
+    if (obj.type === "repeatable") {
+      editObjectiveInfo.textContent = `Non modifiable : Nom = "${obj.name || ""}" • Type = Répétable`;
+    } else if (obj.type === "unique") {
+      editObjectiveInfo.textContent = `Non modifiable : Nom = "${obj.name || ""}" • Type = Unique`;
+    } else if (obj.type === "milestone") {
+      editObjectiveInfo.textContent =
+        `Non modifiable : Texte = "${obj.prefix || ""} … ${obj.suffix || ""}" • Type = Palier`;
+    } else {
+      editObjectiveInfo.textContent = "";
+    }
+  }
   openEditObjectiveModal();
 }
 
@@ -1266,17 +1295,64 @@ async function deleteObjective(objectiveId){
   const obj = (w.objectives || []).find(o => o.id === objectiveId);
   if (!obj) return;
 
-  const ok = await uiConfirm("Supprimer définitivement cet objectif ?", "Supprimer objectif");
+  const ok = await uiConfirm("Supprimer l’objectif ?", "Supprimer objectif");
   if (!ok) return;
 
-  // on ne recalcul pas les XP historiques ici (sinon gros chantier)
-  // -> on supprime juste l’objectif et son historique d’affichage
-  w.objectives = (w.objectives || []).filter(o => o.id !== objectiveId);
+  const also = await uiConfirm(
+    "Veux-tu aussi supprimer l’historique (lignes archivées) ET retirer les XP gagnés ?",
+    "Supprimer l’historique"
+  );
+
+  // CAS 1 : suppression simple (on garde l’historique)
+  if (!also) {
+    obj.deleted = true;       // ✅ soft delete
+    obj.deletedAt = Date.now();
+    save();
+    closeEditObjectiveModal();
+    renderObjectives();
+    return;
+  }
+
+  // CAS 2 : suppression totale + retrait XP + effacement historique
+  let totalObjXp = 0;
+
+  if (obj.type === "unique") {
+    if (obj.done) totalObjXp += Number(obj.xp || 0);
+    obj.done = false;
+    obj.doneAt = null;
+  }
+
+  if (obj.type === "repeatable") {
+    const events = Array.isArray(obj.events) ? obj.events : [];
+    totalObjXp += events.reduce((s, ev) => s + Number(ev.xp || 0), 0);
+    obj.events = [];
+    obj.doneCount = 0;
+  }
+
+  if (obj.type === "milestone") {
+    const steps = Array.isArray(obj.steps) ? obj.steps : [];
+    const doneSteps = steps.filter(s => s.done);
+    totalObjXp += doneSteps.reduce((s, st) => s + Number(st.xp || 0), 0);
+
+    obj.progress = 0;
+    obj.progressEvents = [];
+    obj.steps = steps.map(s => ({ ...s, done:false, doneAt:null }));
+  }
+
+  if (totalObjXp > 0) {
+    removeXpObjectiveOnly(w.id, totalObjXp, "🗑️ Suppression historique");
+  }
+
+  // on retire l'objectif complètement
+  w.objectives = (w.objectives || []).filter(o => o.id !== obj.id);
 
   save();
   closeEditObjectiveModal();
   renderObjectives();
+  renderHomeStats();
+  renderWorldStats();
 }
+
 
 async function deleteEntry(entryId) {
   const w = state.worlds[state.activeWorldId];
@@ -1683,7 +1759,18 @@ if (editAddMilestoneStepBtn) editAddMilestoneStepBtn.onclick = async () => {
   if (!Number.isFinite(count) || count <= 0) return uiAlert("Palier invalide", "Modifier objectif");
   if (!Number.isFinite(xp) || xp <= 0) return uiAlert("XP invalide", "Modifier objectif");
 
-  editDraftMilestoneSteps.push({ count, xp, done: false });
+  // empêcher doublons
+  if (editDraftMilestoneSteps.some(s => Number(s.count) === count)) {
+    return uiAlert("Ce palier existe déjà dans la liste.", "Modifier objectif");
+  }
+
+  // strictement croissant (par rapport AU DERNIER ajouté dans la draft)
+  const last = editDraftMilestoneSteps[editDraftMilestoneSteps.length - 1];
+  if (last && count <= Number(last.count || 0)) {
+    return uiAlert(`Ajoute les paliers dans l’ordre (ex : ${Number(last.count)+1} puis plus grand).`, "Modifier objectif");
+  }
+
+  editDraftMilestoneSteps.push({ count, xp, done:false });
 
   if (editMilestoneCountInput) editMilestoneCountInput.value = "";
   if (editMilestoneXpInput) editMilestoneXpInput.value = "";
