@@ -7,40 +7,32 @@
 
 /* ================== PALETTE ET TYPO (DARK) ================== */
 :root{
-  /* === STELLAR FOCUS (Life Quest) === */
+  /* === LIFE QUEST – WARM ASCENT === */
 
-  /* Fond (pas trop sombre, mais profond) */
+  /* Fond */
   --bg-main:
-    radial-gradient(900px 520px at 18% 8%, rgba(34,211,238,0.12), transparent 62%),
-    radial-gradient(900px 520px at 88% 18%, rgba(139,92,246,0.16), transparent 60%),
-    linear-gradient(160deg, #0E1530, #1A1B3A);
+    linear-gradient(160deg, #23211F, #2E2A27);
 
-  /* Surfaces */
-  --bg-card: rgba(255,255,255,0.06);
-  --border-soft: rgba(255,255,255,0.10);
+  /* Cartes */
+  --bg-card: rgba(255,250,245,0.05);
+  --card-border: rgba(255,250,245,0.08);
 
   /* Texte */
-  --text-main: rgba(255,255,255,0.92);
-  --text-soft: rgba(255,255,255,0.70);
+  --text-main: #F4EFEA;
+  --text-soft: rgba(244,239,234,0.70);
 
   /* Accents */
-  --primary: #8B5CF6;     /* violet énergie */
-  --secondary: #22D3EE;   /* cyan tech */
-  --gold: #F6C177;        /* ambre récompense (remplace le jaune flashy) */
-  --success: #4ADE80;
-  --danger: #FB7185;
+  --primary: #C0652A;     /* Terracotta */
+  --secondary: #7A9E7E;   /* Sauge */
+  --gold: #F2D6B3;        /* Récompense */
+  --danger: #B5523C;
 
   /* UI */
-  --chip: rgba(255,255,255,0.08);
-  --divider: rgba(255,255,255,0.08);
+  --divider: rgba(255,250,245,0.08);
 
-  /* Bordures cards (moins agressives) */
-  --card-border: rgba(255,255,255,0.10);
-  --card-border-strong: rgba(139,92,246,0.26);
-
-  /* Progress (moins “bonbon”, plus premium) */
-  --progress-bg: rgba(255,255,255,0.09);
-  --progress-fill: linear-gradient(90deg, rgba(139,92,246,0.95), rgba(34,211,238,0.85));
+  /* Progress bar */
+  --progress-bg: rgba(255,250,245,0.08);
+  --progress-fill: linear-gradient(90deg, #C0652A, #F2D6B3);
 }
 
 button, .time-input {
@@ -75,26 +67,24 @@ h3 {font-size: 17px;}
 
 /* ================== BOUTONS ================== */
 button{
-  cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 14px;
-  padding: 12px 14px;
-  margin: 6px 0;
-  font-weight: 800;
-  background: linear-gradient(90deg, rgba(139,92,246,0.95), rgba(34,211,238,0.80));
+  background: var(--primary);
   color: #fff;
-  box-shadow: 0 12px 26px rgba(0,0,0,0.28);
-  transition: transform 0.12s ease, filter 0.12s ease, opacity 0.12s ease;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+button:hover{
+  background: #a6531f;
 }
 
 .btn-block {
   width: 100%;
   display: block;
   margin-top: 12px;
-}
-
-button:hover{
-  filter: brightness(1.06);
 }
 
 button:active{
@@ -178,18 +168,15 @@ input:focus, select:focus {
 /* ================== CARDS ================== */
 .card{
   background: var(--bg-card);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  padding: 18px;
   border: 1px solid var(--card-border);
-  box-shadow: 0 10px 26px rgba(0,0,0,0.40);
-  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  transition: transform 0.2s ease;
 }
 
 .card:hover{
-  transform: translateY(-1px);
-  border-color: var(--card-border-strong);
-  box-shadow: 0 14px 34px rgba(0,0,0,0.45);
+  transform: translateY(-2px);
 }
 
 .card.subtle{
@@ -274,26 +261,16 @@ input:focus, select:focus {
 
 /* ================== BARRES DE PROGRESSION ================== */
 .progress-bar{
-  height: 24px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: var(--progress-bg);
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: inset 0 2px 10px rgba(0,0,0,0.35);
+  height: 14px;
 }
 
 .progress-fill{
+  background: var(--progress-fill);
   height: 100%;
-  border-radius: 999px;
-  position: relative;
-  background: linear-gradient(90deg, #8B5CF6, #22D3EE);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.25);
-  font-weight: 700;
-  font-size: 12px;
-  display:flex;
-  align-items:center;
-  justify-content:flex-end;
-  padding-right: 10px;
+  transition: width 0.4s ease;
 }
 
 .progress-fill::after{
@@ -337,6 +314,16 @@ input:focus, select:focus {
 .quest-item.done span {
   text-decoration: line-through;
   opacity: 0.65;
+}
+
+.level{
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.reward{
+  color: var(--gold);
+  font-weight: 600;
 }
 
 /* ================== POPUP ================== */
