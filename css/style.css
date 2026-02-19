@@ -1234,3 +1234,94 @@ input:focus, select:focus, textarea:focus{
   width: 100%;
   height: auto;
 }
+
+/* ===== QUEST LOG (Objectifs) ===== */
+
+.obj-row{
+  display:flex;
+  justify-content:space-between;
+  gap: 12px;
+  align-items:center;
+
+  background:
+    radial-gradient(600px 180px at 20% 0%, rgba(242,214,179,0.08), transparent 65%),
+    rgba(255,255,255,0.04);
+  border: 1px solid rgba(242,214,179,0.10);
+  border-radius: 18px;
+  padding: 12px 12px;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.32);
+}
+
+.obj-left{ min-width: 0; }
+
+.obj-title{
+  font-weight: 950;
+  font-size: 14.5px;
+  letter-spacing: -0.2px;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.obj-meta{
+  font-size: 12px;
+  color: rgba(244,239,234,0.70);
+  font-weight: 750;
+  margin-top: 3px;
+}
+
+/* Petit “chip” XP (on va l’utiliser via JS optionnel) */
+.obj-xp-chip{
+  display:inline-flex;
+  align-items:center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(242,214,179,0.16);
+  background: rgba(242,214,179,0.10);
+  color: rgba(244,239,234,0.92);
+  font-weight: 900;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* actions à droite */
+.obj-actions{
+  display:flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.obj-icon{
+  width: 42px;
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid rgba(242,214,179,0.14);
+  background: rgba(255,255,255,0.06);
+}
+
+.obj-icon:hover{
+  border-color: rgba(242,214,179,0.22);
+  box-shadow: 0 0 18px rgba(242,214,179,0.12);
+}
+
+/* styles spécifiques : valider / éditer / undo (selon emojis) */
+.obj-icon[title*="Valider"]{
+  background: rgba(192,101,42,0.18);
+  border-color: rgba(242,214,179,0.20);
+}
+.obj-icon[title*="Modifier"]{
+  background: rgba(255,255,255,0.06);
+}
+.obj-icon[title*="Annuler"]{
+  background: rgba(242,214,179,0.08);
+}
+
+/* Sections */
+.obj-section-title{
+  margin: 14px 0 8px;
+  font-weight: 950;
+  letter-spacing: -0.2px;
+  color: rgba(244,239,234,0.88);
+}
