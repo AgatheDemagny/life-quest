@@ -1,16 +1,6 @@
-/* main.js — version complète (clean + stable)
-   ✅ Corrige les accolades / IIFE
-   ✅ Loading écran au refresh (plus de flash login)
-   ✅ Cloud sync sans casser l’UI
-   ✅ Temps global en XXhXXmn via #globalTimePretty
-   ⚠️ IMPORTANT: dans ton HTML, ajoute/assure:
-      <span id="globalTimePretty"></span>
-      et un écran <div id="loadingScreen" class="hidden">...</div>
-*/
-
 document.addEventListener("DOMContentLoaded", () => {
   const v = document.getElementById("appVersion");
-  if (v) v.textContent = "V1 - 18/02/2026";
+  if (v) v.textContent = "V1 - 19/02/2026";
 });
 
 // ================== Storage helpers ==================

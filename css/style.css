@@ -1,38 +1,30 @@
-/* style.css — version complète (clean + stable)
-   ✅ Gardé ton style “galaxy”
-   ✅ Unifie les bordures (orange/terracotta) sur TOUTES les cards
-   ✅ Corrige la topbar + bannière (plus de chevauchement)
-   ✅ Loading plein écran + anti-banding (bruit)
-*/
-
-/* ================== PALETTE ET TYPO (DARK) ================== */
+/* ================== PALETTE ET TYPO ================== */
 :root{
-  /* === LIFE QUEST – WARM ASCENT === */
 
-  /* Fond */
-  --bg-main:
-    linear-gradient(160deg, #23211F, #2E2A27);
+  /* ===== BACKGROUND ===== */
+  --bg-main: #0F0F11;
+  --bg-secondary: #141417;
 
-  /* Cartes */
-  --bg-card: rgba(255,250,245,0.05);
-  --card-border: rgba(255,250,245,0.08);
+  /* ===== SURFACES ===== */
+  --card-bg: #1A1A1E;
+  --card-border: rgba(242,214,179,0.08);
 
-  /* Texte */
+  /* ===== BRAND ===== */
+  --primary: #C0652A;
+  --primary-strong: #E07A36;
+
+  /* ===== ACCENT / XP ===== */
+  --accent: #F2D6B3;
+  --accent-glow: rgba(242,214,179,0.35);
+
+  /* ===== TEXT ===== */
   --text-main: #F4EFEA;
-  --text-soft: rgba(244,239,234,0.70);
+  --text-soft: rgba(244,239,234,0.65);
 
-  /* Accents */
-  --primary: #C0652A;     /* Terracotta */
-  --secondary: #7A9E7E;   /* Sauge */
-  --gold: #F2D6B3;        /* Récompense */
-  --danger: #B5523C;
+  /* ===== XP BAR ===== */
+  --xp-bg: #232327;
+  --xp-fill: linear-gradient(90deg, #C0652A, #F2D6B3);
 
-  /* UI */
-  --divider: rgba(255,250,245,0.08);
-
-  /* Progress bar */
-  --progress-bg: rgba(255,250,245,0.08);
-  --progress-fill: linear-gradient(90deg, #C0652A, #F2D6B3);
 }
 
 button, .time-input {
@@ -48,12 +40,11 @@ button, .time-input {
 }
 
 body{
-  font-family: 'Inter', sans-serif;
+  background:
+  radial-gradient(900px 500px at 20% 10%, rgba(192,101,42,0.12), transparent 60%),
+  var(--bg-main);
   color: var(--text-main);
-  background: var(--bg-main);
-  min-height: 100vh;
 }
-
 
 /* ================== TITRES ================== */
 h1, h2, h3 {
@@ -68,17 +59,18 @@ h3 {font-size: 17px;}
 /* ================== BOUTONS ================== */
 button{
   background: var(--primary);
-  color: #fff;
+  color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 14px;
   padding: 10px 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: 0.2s;
 }
 
 button:hover{
-  background: #a6531f;
+  background: var(--primary-strong);
+  box-shadow: 0 0 15px var(--accent-glow);
 }
 
 .btn-block {
@@ -167,13 +159,12 @@ input:focus, select:focus {
 
 /* ================== CARDS ================== */
 .card{
-  background: var(--bg-card);
+  background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 18px;
   padding: 18px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
-  transition: transform 0.2s ease;
 }
+
 
 .card:hover{
   transform: translateY(-2px);
@@ -261,16 +252,16 @@ input:focus, select:focus {
 
 /* ================== BARRES DE PROGRESSION ================== */
 .progress-bar{
-  background: var(--progress-bg);
-  border-radius: 12px;
-  overflow: hidden;
+  background: var(--xp-bg);
+  border-radius: 999px;
   height: 14px;
+  overflow: hidden;
 }
 
 .progress-fill{
-  background: var(--progress-fill);
+  background: var(--xp-fill);
   height: 100%;
-  transition: width 0.4s ease;
+  border-radius: 999px;
 }
 
 .progress-fill::after{
