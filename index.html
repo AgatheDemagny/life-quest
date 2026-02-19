@@ -136,7 +136,7 @@
         </div>
 
         <div id="addWorldModal" class="modal hidden" role="dialog" aria-modal="true" aria-hidden="true">
-          <div class="modal-content card">
+          <div class="modal-content card form-card">
             <h3>Ajouter un monde</h3>
 
             <label>Nom du monde</label>
@@ -213,13 +213,13 @@
           <div id="objectivesList"></div>
         </div>
 
-        <div class="card">
+        <div class="card form-card">
           <h3>Ajouter un objectif</h3>
 
           <label>Type de quête</label>
-          <p>🎖️ Exploit : Quête unique</p>
-          <p>🔮 Rituel : Quête réalisable à l'infini</p>
-          <p>🧗🏼 Ascension : Quête par palier</p>
+          <p class="hint">🎖️ Exploit : Quête unique</p>
+          <p class="hint">🔮 Rituel : Quête réalisable à l'infini</p>
+          <p class="hint">🧗🏼 Ascension : Quête par palier</p>
           <select id="objectiveTypeSelect">
             <option value="unique">🎖️​ Exploit</option>
             <option value="repeatable">🔮​ Rituel</option>
@@ -247,7 +247,7 @@
               <input id="milestoneSuffixInput" placeholder="livres" />
             </div>
 
-            <div class="card subtle">
+            <div class="card subtle form-card">
               <p class="hint">Ajoute les paliers à atteindre dans l’ordre (ex : 1 puis 5 puis 10).</p>
               <div class="inline">
                 <input id="milestoneCountInput" type="number" min="1" inputmode="numeric" placeholder="Palier" />
@@ -264,13 +264,13 @@
         </div>
         <!-- MODAL: Modifier objectif -->
         <div id="editObjectiveModal" class="modal hidden" role="dialog" aria-modal="true" aria-hidden="true">
-          <div class="modal-content card">
+          <div class="modal-content card form-card">
             <h3 id="editObjectiveTitle">Modifier l’objectif</h3>
             <div id="editObjectiveInfo" class="hint" style="margin-bottom:10px;"></div>
             <label>Type de quête</label>
-          <p>🎖️ Exploit : Quête unique</p>
-          <p>🔮 Rituel : Quête réalisable à l'infini</p>
-          <p>🧗🏼 Ascension : Quête par palier</p>
+          <p class="hint">🎖️ Exploit : Quête unique</p>
+          <p class="hint">🔮 Rituel : Quête réalisable à l'infini</p>
+          <p class="hint">🧗🏼 Ascension : Quête par palier</p>
             <select id="editObjectiveTypeSelect">
               <option value="unique">🎖️​ Exploit</option>
               <option value="repeatable">🔮​ Rituel</option>
@@ -297,7 +297,7 @@
                 <input id="editMilestoneSuffixInput" placeholder="Ex : livres" />
               </div>
 
-              <div class="card subtle">
+              <div class="card subtle form-card">
                 <p class="hint">Les paliers précédemment créés ne sont pas modifiables</p>
                 <div class="inline">
                   <input id="editMilestoneCountInput" type="number" min="1" inputmode="numeric" placeholder="Palier (ex : 1)" />

@@ -919,3 +919,38 @@ input:focus, select:focus{
   margin-bottom: 6px; /* ✅ petit espace constant */
   font-weight: 600;
 }
+
+/* ================== FORMS : espacements réguliers (seulement où on met .form-card) ================== */
+.form-card{
+  display: flex;
+  flex-direction: column;
+  gap: 14px;               /* ✅ rythme vertical constant */
+}
+
+/* label -> champ : régulier */
+.form-card label{
+  margin: 0;
+  font-weight: 650;
+}
+
+/* on enlève le margin-top global des inputs DANS les forms */
+.form-card input,
+.form-card select{
+  margin-top: 0;
+}
+
+/* les textes d’aide doivent être collés au champ qu’ils expliquent */
+.form-card .hint,
+.form-card .input-hint{
+  margin: -8px 0 0;        /* ✅ rapproche du label sans faire un trou */
+}
+
+/* groupes en ligne (Minutes = XP / 2 inputs) */
+.form-card .inline{
+  margin-top: -6px;        /* ✅ compense le gap, rend le groupe plus “attaché” au label */
+}
+
+/* si tu as une sous-card (palier), on évite qu'elle fasse double-espacement */
+.form-card .card.subtle{
+  margin: 0;
+}

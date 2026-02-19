@@ -34,8 +34,8 @@ function defaultData() {
 
     settings: {
       weekLoad: "focus",
-      weekGoals: { chill: 150, focus: 250, boss: 400 },
-      monthGoal: 1000,
+      weekGoals: { chill: 200, focus: 400, boss: 600 },
+      monthGoal: 1600,
       levelBase: 120,
       levelGrowth: 1.18
     },
@@ -142,7 +142,7 @@ function load() {
   if (data.periods.weekKey !== wk) {
     const oldKey = data.periods.weekKey;
     const oldXp = data.global.weekXp ?? 0;
-    const oldGoal = (data.settings?.weekGoals?.[data.settings?.weekLoad] ?? 250);
+    const oldGoal = (data.settings?.weekGoals?.[data.settings?.weekLoad] ?? 400);
     if (oldKey) data.history.weeks[oldKey] = { xp: oldXp, goal: oldGoal };
 
     data.periods.weekKey = wk;
@@ -154,7 +154,7 @@ function load() {
   if (data.periods.monthKey !== mk) {
     const oldKey = data.periods.monthKey;
     const oldXp = data.global.monthXp ?? 0;
-    const oldGoal = Number(data.settings?.monthGoal) || 1000;
+    const oldGoal = Number(data.settings?.monthGoal) || 1600;
     if (oldKey) data.history.months[oldKey] = { xp: oldXp, goal: oldGoal };
 
     data.periods.monthKey = mk;
@@ -595,10 +595,10 @@ function levelsGained(prevXp, newXp, base, growth) {
 // ================== Core rules ==================
 function getWeekGoal() {
   const load = state.settings.weekLoad || "focus";
-  return state.settings.weekGoals?.[load] ?? 250;
+  return state.settings.weekGoals?.[load] ?? 400;
 }
 function getMonthGoal() {
-  return Number(state.settings.monthGoal) || 1000;
+  return Number(state.settings.monthGoal) || 1600;
 }
 function calculateTimeXp(world, minutes) {
   const m = Number(world.rules.minutesBase) || 30;
@@ -1951,6 +1951,7 @@ function renderSettings() {
   if (weekGoalBossInput)  weekGoalBossInput.value = state.settings.weekGoals?.boss  ?? defS.weekGoals.boss;
   if (monthGoalInput)     monthGoalInput.value     = getMonthGoal();
 
+
   renderManageWorlds();
 
   const u = (window.firebase && firebase.auth) ? firebase.auth().currentUser : null;
@@ -2221,7 +2222,7 @@ let cloudSaveTimer = null;
     // Loading visible tant qu’on n’a pas décidé
     showScreen(loadingScreen);
 
-    if (authStatus) authStatus.textContent = user ? `Connectée : ${user.email}` : "Non connectée";
+    if (authStatus) authStatus.textContent = user ? `Connectée : ${user.email}` : "Il faut être connecté à un compte pour pouvoir utiliser l'app";
     if (accountEmailLine) accountEmailLine.textContent = user ? `${user.email}` : "";
 
     if (!user) {
