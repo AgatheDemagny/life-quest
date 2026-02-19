@@ -41,7 +41,9 @@ button, .time-input {
 
 body{
   background:
-  radial-gradient(900px 500px at 20% 10%, rgba(192,101,42,0.12), transparent 60%),
+  radial-gradient(1200px 700px at 25% 10%, rgba(192,101,42,0.18), transparent 70%),
+    radial-gradient(1000px 600px at 85% 80%, rgba(242,214,179,0.05), transparent 65%),
+    #08090C;
   var(--bg-main);
   color: var(--text-main);
 }
@@ -266,17 +268,24 @@ input:focus, select:focus {
 /* ================== BARRES DE PROGRESSION ================== */
 .progress-bar{
   background: var(--progress-bg);
-  border-radius: 12px;
+  border-radius: 999px;
+  height: 16px;              /* un peu plus haut */
   overflow: hidden;
-  height: 14px;
-  position: relative;
 }
 
 .progress-fill{
-  background: var(--progress-fill);
   height: 100%;
-  transition: width 0.4s ease;
-  position: relative; /* ✅ IMPORTANT */
+  background: var(--progress-fill);
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 0 8px;            /* espace pour texte */
+  min-width: 38px;           /* évite 0% illisible */
+  box-sizing: border-box;
 }
 
 .progress-fill::after{
@@ -394,28 +403,40 @@ button.icon-btn { width: 42px; }
 }
 
 /* segmented */
+/* ✅ segmented semaine */
 .segmented{
-  display:flex;
-  gap:6px;
-  margin:8px 0 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(242,214,179,0.10);
+  border-radius: 16px;
+  padding: 6px;
+  display: flex;
+  gap: 6px;
 }
 
 .segmented button{
-  flex:1;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.10);
-  color: var(--text-main);
-}
-
-.segmented button:hover{
-  background: rgba(255,255,255,0.10);
+  flex: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-soft);
+  border-radius: 12px;
+  padding: 10px 10px;
+  font-weight: 800;
 }
 
 .segmented button.active{
   background: rgba(242,214,179,0.14);
-  border-color: rgba(242,214,179,0.22);
+  border-color: rgba(242,214,179,0.26);
   color: var(--text-main);
-  box-shadow: 0 10px 24px rgba(242,214,179,0.12);
+  box-shadow: 0 0 18px rgba(242,214,179,0.14);
+}
+
+.segmented button:active{
+  transform: translateY(1px);
+}
+
+
+.segmented button:hover{
+  background: rgba(255,255,255,0.10);
 }
 
 /* ================== MODAL ================== */
@@ -841,3 +862,18 @@ input + label {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-6px) rotate(-2deg); }
 }
+
+/* ✅ TITRES : centrés partout */
+#homeScreen h1, #homeScreen h2,
+#worldScreen h1, #worldScreen h2,
+#settingsScreen h1, #settingsScreen h2,
+#performanceScreen h1, #performanceScreen h2{
+  text-align: center !important;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+h1{ font-size: 30px; line-height: 1.1; }
+h2{ font-size: 22px; line-height: 1.15; }
+h3{ font-size: 18px; }
