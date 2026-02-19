@@ -314,7 +314,7 @@ input:focus, select:focus{
   background: var(--progress-bg);
   border-radius: 999px;
   border: 1px solid rgba(242,214,179,0.10);
-  height: 20px;            /* ✅ plus épais */
+  height: 22px;            /* ✅ plus épais */
   overflow: hidden;
   width: 100%;
 }
@@ -878,7 +878,7 @@ input:focus, select:focus{
 /* Petit "badge" à droite dans les h4 */
 #homeObjectives .subsection h4 .badge-right{
   margin-left: auto;
-  font-size: 12px;
+  font-size: 14px;
   padding: 4px 10px;
   border-radius: 999px;
   background: rgba(255,255,255,0.06);

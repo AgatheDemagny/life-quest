@@ -100,10 +100,6 @@ function load() {
 
   // ensure defaults exist
   if (!data.settings) data.settings = def.settings;
-  const validLoads = ["chill", "focus", "boss"];
-  if (!validLoads.includes(data.settings.weekLoad)) {
-    data.settings.weekLoad = def.settings.weekLoad; // "focus"
-  }
   if (!data.periods) data.periods = def.periods;
   if (!data.global) data.global = def.global;
   if (!data.worlds) data.worlds = {};
@@ -113,6 +109,23 @@ function load() {
   if (!data.history) data.history = { weeks: {}, months: {} };
   if (!data.history.weeks) data.history.weeks = {};
   if (!data.history.months) data.history.months = {};
+  
+  const validLoads = ["chill", "focus", "boss"];
+  const mapOldLoad = { light: "chill", normal: "focus", busy: "boss", "chargée": "boss" };
+  if (!validLoads.includes(data.settings.weekLoad)) {
+    data.settings.weekLoad = mapOldLoad[data.settings.weekLoad] || def.settings.weekLoad; // "focus"
+  }
+
+  const g = data.settings.weekGoals || {};
+  data.settings.weekGoals = {
+    chill: Number(g.chill ?? g.light ?? def.settings.weekGoals.chill),
+    focus: Number(g.focus ?? g.normal ?? def.settings.weekGoals.focus),
+    boss:  Number(g.boss  ?? g.busy  ?? def.settings.weekGoals.boss)
+  };
+
+  if (!Number.isFinite(Number(data.settings.monthGoal)) || Number(data.settings.monthGoal) <= 0) {
+    data.settings.monthGoal = def.settings.monthGoal;
+  }
 
   if (!hadLocal) {
     data.meta.freshInstall = true;
@@ -121,7 +134,6 @@ function load() {
     data.meta.freshInstall = false;
   }
 
-  // reset week/month if keys changed
   const wk = getISOWeekKey();
   const mk = getMonthKey();
 
@@ -151,6 +163,7 @@ function load() {
     data.celebrations.monthKey = null;
   }
 
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
   return data;
 }
 
@@ -1932,9 +1945,11 @@ if (editSaveMilestoneBtn) editSaveMilestoneBtn.onclick = async () => {
 // ================== Settings ==================
 function renderSettings() {
   if (monthGoalInput) monthGoalInput.value = getMonthGoal();
-  if (weekGoalChillInput) weekGoalChillInput.value = state.settings.weekGoals.chill;
-  if (weekGoalFocusInput) weekGoalFocusInput.value = state.settings.weekGoals.focus;
-  if (weekGoalBossInput) weekGoalBossInput.value = state.settings.weekGoals.boss;
+  const defS = defaultData().settings;
+  if (weekGoalChillInput) weekGoalChillInput.value = state.settings.weekGoals?.chill ?? defS.weekGoals.chill;
+  if (weekGoalFocusInput) weekGoalFocusInput.value = state.settings.weekGoals?.focus ?? defS.weekGoals.focus;
+  if (weekGoalBossInput)  weekGoalBossInput.value = state.settings.weekGoals?.boss  ?? defS.weekGoals.boss;
+  if (monthGoalInput)     monthGoalInput.value     = getMonthGoal();
 
   renderManageWorlds();
 
