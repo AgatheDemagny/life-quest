@@ -3,8 +3,8 @@
   "short_name": "Life Quest",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#0B0B0F",
-  "theme_color": "#80586D",
+  "background_color": "#0F0F11",
+  "theme_color": "#0F0F11",
   "orientation": "portrait",
   "icons": [
     {
