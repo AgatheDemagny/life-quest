@@ -710,3 +710,70 @@ input:focus, select:focus{
   margin: 0;              /* annule le centrage auto */
   border-radius: 12px;
 }
+
+/* BANNIÈRE: 2 comportements */
+#onboardingScreen .app-banner{
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  margin: 10px auto 18px;
+}
+
+#homeScreen .topbar .app-banner.banner-inline{
+  width: auto !important;
+  height: 46px !important;
+  max-width: calc(100% - 56px) !important; /* laisse la place au bouton */
+  margin: 0 !important;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.stat-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--divider);
+}
+.stat-row:last-child{ border-bottom:none; padding-bottom:2px; }
+
+.stat-value{
+  margin-left:auto;
+  text-align:right;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+/* OBJECTIFS: respirations */
+#homeObjectives .subsection{
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--divider);
+}
+#homeObjectives .subsection:first-of-type{
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* Ligne XP compacte */
+.stat-row.compact{
+  padding: 6px 0 10px;
+  border-bottom: none;
+}
+.stat-row.compact .stat-label{
+  display:none; /* on garde "Hebdo/Mensuel" en h4 au-dessus */
+}
+
+/* h4 + valeurs pas collés */
+#homeObjectives h4{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap: 10px;
+  margin: 0 0 8px;
+}
+#homeObjectives h4::after{
+  content: "";
+}

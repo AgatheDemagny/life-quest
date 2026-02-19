@@ -78,29 +78,36 @@
 
           <div class="subsection">
             <h4>Hebdomadaire</h4>
-            <div class="stat-row compact"> 
-              <span class="stat-label">Hebdo</span> 
-              <span class="stat-value">
-                <span id="weekXp"></span>/<span id="weekGoal"></span> XP</span> 
-              </div> 
-              <div class="progress-bar">
-                <div class="progress-fill" id="weekProgress">0%</div>
-              </div> 
-            </div> 
 
-            <div class="subsection" style="margin-top:12px;"> 
-              <h4>Mensuel</h4>
-              <div class="stat-row compact"> 
-                <span class="stat-label">Mensuel</span> 
-                <span class="stat-value">
-                  <span id="monthXp"></span>/<span id="monthGoal"></span> XP</span> 
-                </div> 
-                <div class="progress-bar">
-                  <div class="progress-fill" id="monthProgress">0%</div>
-                </div> 
-              </div>
+            <div class="segmented" id="weekLoadPicker">
+              <button data-load="busy">Chargée</button>
+              <button data-load="normal" class="active">Normale</button>
+              <button data-load="light">Légère</button>
+            </div>
+
+            <div class="stat-row compact">
+              <span class="stat-label">Hebdo</span>
+              <span class="stat-value"><span id="weekXp"></span>/<span id="weekGoal"></span> XP</span>
+            </div>
+
+            <div class="progress-bar">
+              <div class="progress-fill" id="weekProgress">0%</div>
             </div>
           </div>
+
+          <div class="subsection">
+            <h4>Mensuel</h4>
+
+            <div class="stat-row compact">
+              <span class="stat-label">Mensuel</span>
+              <span class="stat-value"><span id="monthXp"></span>/<span id="monthGoal"></span> XP</span>
+            </div>
+
+            <div class="progress-bar">
+              <div class="progress-fill" id="monthProgress">0%</div>
+            </div>
+          </div>
+
           <button id="openPerformanceBtn" class="ghost btn-block">🏃🏽‍♀️‍➡️ Performances passées</button>
         </div>
       </div>
