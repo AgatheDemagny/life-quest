@@ -33,8 +33,8 @@ function defaultData() {
     meta: { updatedAt: 0, freshInstall: true },
 
     settings: {
-      weekLoad: "normal",
-      weekGoals: { busy: 150, normal: 250, light: 400 },
+      weekLoad: "focus",
+      weekGoals: { chill: 150, focus: 250, boss: 400 },
       monthGoal: 1000,
       levelBase: 120,
       levelGrowth: 1.18
@@ -253,9 +253,9 @@ const openSettingsBtn = el("openSettingsBtn");
 const backFromSettingsBtn = el("backFromSettingsBtn");
 
 const monthGoalInput = el("monthGoalInput");
-const weekGoalBusyInput = el("weekGoalBusyInput");
-const weekGoalNormalInput = el("weekGoalNormalInput");
-const weekGoalLightInput = el("weekGoalLightInput");
+const weekGoalChillInput = el("weekGoalChillInput");
+const weekGoalFocusInput = el("weekGoalFocusInput");
+const weekGoalBossInput = el("weekGoalBossInput");
 const saveGoalsBtn = el("saveGoalsBtn");
 
 const manageWorldsActiveList = el("manageWorldsActiveList");
@@ -541,6 +541,16 @@ document.addEventListener("click", (e) => {
   if (editObjectiveModal && e.target === editObjectiveModal) closeEditObjectiveModal();
 });
 
+const resetGoalsBtn = document.getElementById("resetGoalsBtn");
+
+resetGoalsBtn.addEventListener("click", () => {
+  const defaults = defaultData().settings;
+
+  document.getElementById("weekGoalChillInput").value = defaults.weekGoals.chill;
+  document.getElementById("weekGoalFocusInput").value = defaults.weekGoals.focus;
+  document.getElementById("weekGoalBossInput").value  = defaults.weekGoals.boss;
+  document.getElementById("monthGoalInput").value     = defaults.monthGoal;
+});
 
 // ================== Levels ==================
 function xpForNextLevel(level, base, growth) {
@@ -565,7 +575,7 @@ function levelsGained(prevXp, newXp, base, growth) {
 
 // ================== Core rules ==================
 function getWeekGoal() {
-  const load = state.settings.weekLoad || "normal";
+  const load = state.settings.weekLoad || "focus";
   return state.settings.weekGoals?.[load] ?? 250;
 }
 function getMonthGoal() {
@@ -605,13 +615,13 @@ function addXp(worldId, xp, reasonText) {
     prevGlobalXp, state.global.totalXp,
     state.settings.levelBase, state.settings.levelGrowth
   );
-  if (gNow > gPrev) showPopup(`🎉 Niveau global ${gNow} atteint !`);
+  if (gNow > gPrev) showPopup(`⭐ Niveau global ${gNow} atteint !`);
 
   const { prev: wPrev, now: wNow } = levelsGained(
     prevWorldXp, w.stats.totalXp,
     state.settings.levelBase, state.settings.levelGrowth
   );
-  if (wNow > wPrev) showPopup(`⭐ Niveau ${wNow} atteint dans ${w.icon} ${w.name} !`);
+  if (wNow > wPrev) showPopup(`🏰​​ Niveau ${wNow} atteint dans ${w.icon} ${w.name} !`);
 
   renderHomeStats();
   renderWorldStats();
@@ -636,13 +646,13 @@ function addXpObjectiveOnly(worldId, xp, reasonText) {
     prevGlobalXp, state.global.totalXp,
     state.settings.levelBase, state.settings.levelGrowth
   );
-  if (gNow > gPrev) showPopup(`🎉 Niveau global ${gNow} atteint !`);
+  if (gNow > gPrev) showPopup(`⭐ Niveau global ${gNow} atteint !`);
 
   const { prev: wPrev, now: wNow } = levelsGained(
     prevWorldXp, w.stats.totalXp,
     state.settings.levelBase, state.settings.levelGrowth
   );
-  if (wNow > wPrev) showPopup(`⭐ Niveau ${wNow} atteint dans ${w.icon} ${w.name} !`);
+  if (wNow > wPrev) showPopup(`🏰 Niveau ${wNow} atteint dans ${w.icon} ${w.name} !`);
 
   renderHomeStats();
   renderWorldStats();
@@ -763,8 +773,8 @@ function renderHomeStats() {
         const current = state.settings.weekLoad;
         if (nextLoad === current) return;
 
-        const label = nextLoad === "busy" ? "chargée" : nextLoad === "normal" ? "normale" : "légère";
-        const ok = await uiConfirm(`Confirmer semaine ${label} ?`, "Objectif hebdo");
+        const label = nextLoad === "chill" ? "Chill" : nextLoad === "focus" ? "Focus" : "Boss";
+        const ok = await uiConfirm(`Passer le mode de la semaine en ${label} ?`, "Modification de l'objectif hebdomadaire");
         if (!ok) return;
 
         state.settings.weekLoad = nextLoad;
@@ -792,15 +802,14 @@ function renderHomeStats() {
     monthProgressEl.innerText = `${Math.round(mPct*100)}%`;
   }
 
-  // ✅ ICI : AJOUTE LE BLOC 3C (tout à la fin)
   ensureCelebrationsState();
 
   if (wPct >= 1 && state.celebrations.weekKey !== state.periods.weekKey) {
     state.celebrations.weekKey = state.periods.weekKey;
     save();
     openCelebrationModal({
-      title: "🏁 Objectif hebdomadaire atteint !",
-      msg: "Félicitations ✨ Tu as complété ton objectif de la semaine !",
+      title: "🥇 Objectif hebdomadaire atteint !",
+      msg: "Félicitations ! Tu as complété ton objectif de la semaine !",
       emoji: "🎉"
     });
   }
@@ -810,12 +819,11 @@ function renderHomeStats() {
     save();
     openCelebrationModal({
       title: "🏆 Objectif mensuel atteint !",
-      msg: "Incroyable 💜 Tu as complété ton objectif du mois !",
-      emoji: "🏆"
+      msg: "Incroyable ! Tu as complété ton objectif du mois !",
+      emoji: "🎉"
     });
   }
 }
-
 
 function renderWorlds() {
   if (!worldsListEl) return;
@@ -914,7 +922,6 @@ function normalizeWorldObjectives(w){
     // Repeatable: events = historique de validations (1 ligne par validation)
     if (o.type === "repeatable") {
       if (!Array.isArray(o.events)) o.events = [];
-      // migration ancienne donnée doneCount -> events (dates approximatives)
       const n = Number(o.doneCount || 0);
       if (n > 0 && o.events.length === 0) {
         const now = Date.now();
@@ -948,9 +955,9 @@ function normalizeWorldObjectives(w){
 }
 
 function getObjectiveIcon(type){
-  if (type === "unique") return "⭐";
-  if (type === "repeatable") return "🔁";
-  if (type === "milestone") return "🏅";
+  if (type === "unique") return "🎖️";
+  if (type === "repeatable") return "🔮";
+  if (type === "milestone") return "🧗🏼";
   return "🎯";
 }
 
@@ -963,7 +970,7 @@ function getMilestoneNextStep(obj){
   return (obj.steps || []).find(s => !s.done) || null;
 }
 
-// ✅ 2 sections seulement : En cours / Archivés
+// 2 sections : En cours / Archivés
 function renderObjectives() {
   const w = state.worlds[state.activeWorldId];
   if (!w || !objectivesListEl) return;
@@ -976,7 +983,7 @@ function renderObjectives() {
   const inProgress = [];
   list.forEach(o => {
     if (!o) return;
-    if (o.deleted) return; // ✅ ici (pas avant la boucle)
+    if (o.deleted) return; 
 
     if (o.type === "unique" && !o.done) inProgress.push(o);
     if (o.type === "repeatable") inProgress.push(o);
@@ -991,7 +998,7 @@ function renderObjectives() {
     archived.push({
       kind: "uniqueDone",
       id: o.id,
-      icon: "⭐",
+      icon: "🎖️",
       title: `${(o.name || "Objectif").trim()}`,
       xp: Number(o.xp || 0),
       ts: o.doneAt || null,
@@ -1012,7 +1019,7 @@ function renderObjectives() {
       archived.push({
         kind: "repeatableEvent",
         id: `${o.id}-ev-${idx}`,
-        icon: "🔁",
+        icon: "🔮",
         title: `${(o.name || "Objectif").trim()} • x${n}`,
         xp: Number(ev.xp || 0),
         ts: ev.ts || null,
@@ -1034,7 +1041,7 @@ function renderObjectives() {
       archived.push({
         kind: "milestoneStep",
         id: `${o.id}-step-${s.count}`,
-        icon: "🏅",
+        icon: "🧗🏼",
         title: `${(o.prefix || "").trim()} ${s.count} ${(o.suffix || "").trim()}`,
         xp: Number(s.xp || 0),
         ts: s.doneAt || null,
@@ -1089,7 +1096,6 @@ function renderInProgressRow(obj){
   const title = document.createElement("div");
   title.className = "obj-title";
 
-  // ✅ on crée xpLine AVANT de l'utiliser
   const xpLine = document.createElement("div");
   xpLine.className = "obj-meta";
 
@@ -1108,7 +1114,7 @@ function renderInProgressRow(obj){
   if (obj.type === "milestone") {
     const next = getMilestoneNextStep(obj);
     const xp = next ? Number(next.xp || 0) : 0;
-    title.textContent = `${icon} ${(obj.prefix || "").trim()} … ${(obj.suffix || "").trim()}`;
+    title.textContent = `${icon} ${(obj.prefix || "").trim()} 1 ${(obj.suffix || "").trim()}`;
     xpLine.textContent = `${xp} XP`;
   }
 
@@ -1119,14 +1125,14 @@ function renderInProgressRow(obj){
   actions.className = "obj-actions";
 
   const validateBtn = document.createElement("button");
-  validateBtn.className = "obj-icon";
+  validateBtn.className = "obj-icon-inline";
   validateBtn.type = "button";
   validateBtn.title = "Valider";
-  validateBtn.textContent = "✅";
+  validateBtn.textContent = "🎯";
   validateBtn.onclick = () => validateObjective(obj.id);
 
   const editBtn = document.createElement("button");
-  editBtn.className = "obj-icon";
+  editBtn.className = "obj-icon-inline";
   editBtn.type = "button";
   editBtn.title = "Modifier";
   editBtn.textContent = "✏️";
@@ -1139,7 +1145,6 @@ function renderInProgressRow(obj){
   row.appendChild(actions);
   return row;
 }
-
 
 function renderArchivedRow(item){
   const row = document.createElement("div");
@@ -1154,7 +1159,7 @@ function renderArchivedRow(item){
 
   const meta = document.createElement("div");
   meta.className = "obj-meta";
-  meta.textContent = item.ts ? `✅ ${formatDateShort(item.ts)}` : "";
+  meta.textContent = item.ts ? `🎯 ${formatDateShort(item.ts)}` : "";
 
   const xpLine = document.createElement("div");
   xpLine.className = "obj-meta";
@@ -1167,10 +1172,10 @@ function renderArchivedRow(item){
   actions.className = "obj-actions";
 
   const undoBtn = document.createElement("button");
-  undoBtn.className = "obj-icon";
+  undoBtn.className = "obj-icon-inline";
   undoBtn.type = "button";
   undoBtn.title = item.undoable ? "Annuler (24h)" : "Annulation impossible";
-  undoBtn.textContent = "↩️";
+  undoBtn.textContent = "👾​";
   undoBtn.disabled = !item.undoable;
 
   undoBtn.onclick = () => undoArchivedItem(item);
@@ -1191,7 +1196,7 @@ async function undoArchivedItem(item){
     return;
   }
 
-  const ok = await uiConfirm("Annuler cette validation ?", "Archivés");
+  const ok = await uiConfirm("Annuler cet objectif ?", "Annuler l'objectif");
   if (!ok) return;
 
   // UNIQUE
@@ -1200,7 +1205,7 @@ async function undoArchivedItem(item){
     obj.done = false;
     obj.doneAt = null;
 
-    removeXpObjectiveOnly(w.id, Number(item.xp || 0), "↩️ Annulation");
+    removeXpObjectiveOnly(w.id, Number(item.xp || 0), "👾​ Objectif annulé");
     save();
     renderObjectives();
     return;
@@ -1297,12 +1302,12 @@ function startEditObjective(obj){
   // Infos non modifiables (affichées hors champs)
   if (editObjectiveInfo) {
     if (obj.type === "repeatable") {
-      editObjectiveInfo.textContent = `Non modifiable : Nom = "${obj.name || ""}" • Type = Répétable`;
+      editObjectiveInfo.textContent = `Seule la récompense associée peut être modifiée`;
     } else if (obj.type === "unique") {
-      editObjectiveInfo.textContent = `Non modifiable : Nom = "${obj.name || ""}" • Type = Unique`;
+      editObjectiveInfo.textContent = `Seule la récompense associée peut être modifiée`;
     } else if (obj.type === "milestone") {
       editObjectiveInfo.textContent =
-        `Non modifiable : Texte = "${obj.prefix || ""} … ${obj.suffix || ""}" • Type = Palier`;
+        `Non modifiable : Texte = "Seul l'ajout de nouveaux paliers est possible`;
     } else {
       editObjectiveInfo.textContent = "";
     }
@@ -1338,7 +1343,7 @@ function renderEntries() {
   entriesListEl.innerHTML = "";
 
   if (w.entries.length === 0) {
-    entriesListEl.innerHTML = `<p class="hint">Aucune saisie pour l’instant.</p>`;
+    entriesListEl.innerHTML = `<p class="hint">Aucune temps n'a été saisi pour le moment.</p>`;
     return;
   }
 
@@ -1378,12 +1383,12 @@ async function deleteObjective(objectiveId){
   const obj = (w.objectives || []).find(o => o.id === objectiveId);
   if (!obj) return;
 
-  const ok = await uiConfirm("Supprimer l’objectif ?", "Supprimer objectif");
+  const ok = await uiConfirm("Es-tu sûre de vouloir supprimer l’objectif ?", "Supprimer l'objectif");
   if (!ok) return;
 
   const also = await uiConfirm(
-    "Veux-tu aussi supprimer l’historique (lignes archivées) ET retirer les XP gagnés ?",
-    "Supprimer l’historique"
+    "Veux-tu aussi supprimer l’historique associé (lignes archivées) et ainsi perdre les XP gagnées ?",
+    "Supprimer aussi l’historique"
   );
 
   // CAS 1 : suppression simple (on garde l’historique)
@@ -1423,7 +1428,7 @@ async function deleteObjective(objectiveId){
   }
 
   if (totalObjXp > 0) {
-    removeXpObjectiveOnly(w.id, totalObjXp, "🗑️ Suppression historique");
+    removeXpObjectiveOnly(w.id, totalObjXp, "❌ Objectif et historique supprimé");
   }
 
   // on retire l'objectif complètement
@@ -1449,7 +1454,7 @@ async function deleteEntry(entryId) {
     return;
   }
 
-  const ok = await uiConfirm(`Supprimer cette saisie (${entry.minutes} min, -${entry.xp} XP) ?`, "Suppression");
+  const ok = await uiConfirm(`Es-tu sûr de vouloir supprimer cette saisie: ${entry.minutes} min - ${entry.xp} XP ?`, "Supprimer la saisie");
   if (!ok) return;
 
   w.entries = w.entries.filter(e => e.id !== entryId);
@@ -1465,7 +1470,7 @@ async function deleteEntry(entryId) {
   state.global.monthXp = Math.max(0, (state.global.monthXp || 0) - entry.xp);
 
   save();
-  showPopup(`🗑️ Saisie supprimée (-${entry.xp} XP)`);
+  showPopup(`❌ Saisie supprimée (-${entry.xp} XP)`);
 
   renderHomeStats();
   renderWorldStats();
@@ -1511,15 +1516,15 @@ if (createWorldBtn) createWorldBtn.onclick = async () => {
   } else {
     // ✅ Cas 2 : un seul rempli -> erreur
     if (minutesRaw === "" || xpRaw === "") {
-      return uiAlert("Si tu modifies la règle XP, il faut renseigner à la fois Minutes ET XP.", "Créer un monde");
+      return uiAlert("Si tu personnalises la règle XP, il faut renseigner à la fois Minutes ET XP.", "Ajouter un monde");
     }
 
     // ✅ Cas 3 : les 2 remplis -> ok
     minutes = parseInt(minutesRaw, 10);
     xp = parseInt(xpRaw, 10);
 
-    if (!Number.isFinite(minutes) || minutes <= 0) return uiAlert("Minutes invalides", "Créer un monde");
-    if (!Number.isFinite(xp) || xp <= 0) return uiAlert("XP invalides", "Créer un monde");
+    if (!Number.isFinite(minutes) || minutes <= 0) return uiAlert("Minutes invalides", "Ajouter un monde");
+    if (!Number.isFinite(xp) || xp <= 0) return uiAlert("XP invalides", "Ajouter un monde");
   }
 
   const id = "world-" + Date.now();
@@ -1543,7 +1548,7 @@ if (createWorldBtn) createWorldBtn.onclick = async () => {
 // onboarding
 if (startBtn) startBtn.onclick = async () => {
   const name = (playerNameInput?.value || "").trim();
-  if (!name) return uiAlert("Entre un pseudo", "Bienvenue");
+  if (!name) return uiAlert("Saisir un pseudo", "Bienvenue");
   state.playerName = name;
   save();
   renderAfterAuth();
@@ -1590,7 +1595,7 @@ if (validateTimeBtn) validateTimeBtn.onclick = () => {
   if (!w) return;
 
   const minutes = parseInt(timeMinutesInput?.value || "", 10);
-  if (!Number.isFinite(minutes) || minutes <= 0) return uiAlert("Minutes invalides", "Saisie temps");
+  if (!Number.isFinite(minutes) || minutes <= 0) return uiAlert("Minutes saisies invalides", "Saisie de temps invalides");
 
   const xp = calculateTimeXp(w, minutes);
 
@@ -1601,7 +1606,7 @@ if (validateTimeBtn) validateTimeBtn.onclick = () => {
   w.stats.timeTotal = (w.stats.timeTotal || 0) + minutes;
   save();
 
-  addXp(w.id, xp, "⏱️ Temps validé !");
+  addXp(w.id, xp, "⏱️ Temps ajouté !");
   if (timeMinutesInput) timeMinutesInput.value = "";
   if (timePreviewEl) timePreviewEl.innerText = "";
 };
@@ -1627,7 +1632,7 @@ if (addMilestoneStepBtn) addMilestoneStepBtn.onclick = async () => {
 
   const last = draftMilestoneSteps[draftMilestoneSteps.length - 1];
   if (last && count <= last.count) {
-    return uiAlert(`Ajoute des paliers dans l’ordre (ex : ${last.count + 1}, puis plus grand).`, "Objectifs");
+    return uiAlert(`Les paliers saisis doivent être dans l'ordre croissant !`, "Objectifs");
   }
 
   draftMilestoneSteps.push({ count, xp, done: false });
@@ -1665,9 +1670,9 @@ if (createMilestoneObjectiveBtn) createMilestoneObjectiveBtn.onclick = async () 
 
   const prefix = (milestonePrefixInput?.value || "").trim();
   const suffix = (milestoneSuffixInput?.value || "").trim();
-  if (!prefix) return uiAlert("Texte 1 requis (ex : Lire)", "Objectifs");
-  if (!suffix) return uiAlert("Texte 2 requis (ex : livres)", "Objectifs");
-  if (draftMilestoneSteps.length === 0) return uiAlert("Ajoute au moins un palier", "Objectifs");
+  if (!prefix) return uiAlert("Partie 1 du nom requise", "Objectifs");
+  if (!suffix) return uiAlert("Partie 2 du nom requise", "Objectifs");
+  if (draftMilestoneSteps.length === 0) return uiAlert("Ajoute au moins un palier pour pouvoir créer l'objectif", "Objectifs");
 
   obj.type = "milestone";
   obj.prefix = prefix;
@@ -1690,7 +1695,7 @@ if (createMilestoneObjectiveBtn) createMilestoneObjectiveBtn.onclick = async () 
   if (createObjectiveBtn) createObjectiveBtn.innerText = "Ajouter";
 
   save();
-  showPopup(isEditing ? "📝 Objectif palier modifié" : "🎯 Objectif palier ajouté");
+  showPopup(isEditing ? "📝 Objectif palier modifié" : "✅​ Objectif palier ajouté");
   renderObjectives();
 };
 
@@ -1752,7 +1757,7 @@ if (createObjectiveBtn) createObjectiveBtn.onclick = async () => {
   if (createObjectiveBtn) createObjectiveBtn.innerText = "Ajouter";
 
   save();
-  showPopup(isEditing ? "📝 Objectif modifié" : "🎯 Objectif ajouté");
+  showPopup(isEditing ? "📝 Objectif modifié" : "✅​ Objectif ajouté");
   renderObjectives();
 };
 
@@ -1868,7 +1873,7 @@ if (editAddMilestoneStepBtn) editAddMilestoneStepBtn.onclick = async () => {
   // strictement croissant (par rapport AU DERNIER ajouté dans la draft)
   const last = editDraftMilestoneSteps[editDraftMilestoneSteps.length - 1];
   if (last && count <= Number(last.count || 0)) {
-    return uiAlert(`Ajoute les paliers dans l’ordre (ex : ${Number(last.count)+1} puis plus grand).`, "Modifier objectif");
+    return uiAlert(`Les paliers saisis doivent être dans l'ordre croissant !`, "Modifier objectif");
   }
 
   editDraftMilestoneSteps.push({ count, xp, done:false });
@@ -1891,7 +1896,7 @@ if (editSaveMilestoneBtn) editSaveMilestoneBtn.onclick = async () => {
 
   if (!prefix) return uiAlert("Texte 1 requis", "Modifier objectif");
   if (!suffix) return uiAlert("Texte 2 requis", "Modifier objectif");
-  if (editDraftMilestoneSteps.length === 0) return uiAlert("Ajoute au moins un palier", "Modifier objectif");
+  if (editDraftMilestoneSteps.length === 0) return uiAlert("Ajoute au moins un palier pour pouvoir créer l'objectif", "Modifier objectif");
 
   obj.type = "milestone";
   obj.prefix = prefix;
@@ -1921,9 +1926,9 @@ if (editSaveMilestoneBtn) editSaveMilestoneBtn.onclick = async () => {
 // ================== Settings ==================
 function renderSettings() {
   if (monthGoalInput) monthGoalInput.value = getMonthGoal();
-  if (weekGoalBusyInput) weekGoalBusyInput.value = state.settings.weekGoals.busy;
-  if (weekGoalNormalInput) weekGoalNormalInput.value = state.settings.weekGoals.normal;
-  if (weekGoalLightInput) weekGoalLightInput.value = state.settings.weekGoals.light;
+  if (weekGoalChillInput) weekGoalChillInput.value = state.settings.weekGoals.chill;
+  if (weekGoalFocusInput) weekGoalFocusInput.value = state.settings.weekGoals.focus;
+  if (weekGoalBossInput) weekGoalBossInput.value = state.settings.weekGoals.boss;
 
   renderManageWorlds();
 
@@ -1956,11 +1961,11 @@ function renderManageWorlds() {
     label.innerText = `${w.icon} ${w.name}`;
 
     const archiveBtn = document.createElement("button");
-    archiveBtn.innerText = "Supprimer";
+    archiveBtn.innerText = "Archiver";
     archiveBtn.onclick = async () => {
       const ok = await uiConfirm(
-        `Archiver ${w.icon} ${w.name} ?\n(Il disparaît de l’accueil, mais tes XP ne changent pas.)`,
-        "Supprimer un monde"
+        `Archiver ${w.name} ?\nSi oui, ${w.name} disparaîtra de l'écran d'accueil, sans impacter tes XP.`,
+        "Archiver un monde"
       );
       if (!ok) return;
 
@@ -2045,16 +2050,16 @@ function renderManageWorlds() {
 
 if (saveGoalsBtn) saveGoalsBtn.onclick = () => {
   const mg = parseInt(monthGoalInput?.value || "", 10);
-  const b = parseInt(weekGoalBusyInput?.value || "", 10);
-  const n = parseInt(weekGoalNormalInput?.value || "", 10);
-  const l = parseInt(weekGoalLightInput?.value || "", 10);
+  const b = parseInt(weekGoalChillInput?.value || "", 10);
+  const n = parseInt(weekGoalFocusInput?.value || "", 10);
+  const l = parseInt(weekGoalBossInput?.value || "", 10);
 
   if (![mg, b, n, l].every(v => Number.isFinite(v) && v > 0)) {
     return uiAlert("Valeurs invalides", "Paramètres");
   }
 
   state.settings.monthGoal = mg;
-  state.settings.weekGoals = { busy: b, normal: n, light: l };
+  state.settings.weekGoals = { chill: b, focus: n, boss: l };
   save();
 
   showPopup("✅ Objectifs enregistrés");
@@ -2065,10 +2070,10 @@ if (resetGameBtn) resetGameBtn.onclick = async () => {
   const user = (window.firebase && firebase.auth) ? firebase.auth().currentUser : null;
   if (!user) return uiAlert("Tu dois être connectée pour réinitialiser le jeu.", "Réinitialisation");
 
-  const ok1 = await uiConfirm("Es-tu sûre de vouloir supprimer toutes les données ?", "Réinitialisation");
+  const ok1 = await uiConfirm("Es-tu sûre de vouloir supprimer toutes tes données ?", "Réinitialisation");
   if (!ok1) return;
 
-  const ok2 = await uiConfirm("Dernière confirmation : tout sera perdu. Continuer ?", "Réinitialisation");
+  const ok2 = await uiConfirm("Dernière confirmation: tout sera perdu. Continuer ?", "Réinitialisation");
   if (!ok2) return;
 
   state = defaultData();
@@ -2166,7 +2171,7 @@ let cloudSaveTimer = null;
 
     try {
       await auth.signInWithEmailAndPassword(email, pass);
-      showPopup("✅ Connectée");
+      showPopup("✅ Connecté");
     } catch (e) {
       await uiAlert(e.message, "Connexion");
     }
@@ -2175,7 +2180,7 @@ let cloudSaveTimer = null;
   async function logout() {
     try {
       await auth.signOut();
-      showPopup("👋 Déconnectée");
+      showPopup("👋 Déconnecté");
     } catch (e) {
       await uiAlert(e.message, "Connexion");
     }

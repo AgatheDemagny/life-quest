@@ -38,7 +38,7 @@
           <button id="btnSignup" class="ghost">Créer un compte</button>
         </div>
 
-        <p class="hint" id="authStatus">Non connectée</p>
+        <p class="hint" id="authStatus">Il faut être connecté à un compte pour pouvoir utiliser l'app</p>
       </div>
     </div>
 
@@ -47,7 +47,7 @@
       <img src="icons/banner-1080-420.png" alt="Life Quest" class="app-banner">
       <div class="card">
         <h2>Choisis ton pseudo</h2>
-        <input id="playerNameInput" type="text" placeholder="Ex : Agathe" maxlength="24" />
+        <input id="playerNameInput" type="text" placeholder="Ex : Bob" maxlength="24" />
         <button id="startBtn" class="primary btn-block">Commencer</button>
       </div>
     </section>
@@ -62,7 +62,7 @@
       <!-- Onglet stats -->
       <div id="homeStats">
         <div class="card">
-          <h3>Joueuse</h3>
+          <h3>Joueur</h3>
           <p><strong>Pseudo</strong> <span id="playerName"></span></p>
           <p><strong>Niveau</strong> <span id="globalLevel" class="level"></span></p>
           <p><strong>XP totale</strong> <span id="globalXp" class="reward"></span></p>
@@ -77,18 +77,23 @@
         <div class="card">
           <h3>Objectifs</h3>
 
+          <!-- ================= HEBDOMADAIRE ================= -->
           <div class="subsection">
             <h4>Hebdomadaire</h4>
 
+            <div class="mode-label">Mode</div>
+
             <div class="segmented" id="weekLoadPicker">
-              <button data-load="busy">Chargée</button>
-              <button data-load="normal" class="active">Normale</button>
-              <button data-load="light">Légère</button>
+              <button data-load="chill">Chill</button>
+              <button data-load="focus" class="active">Focus</button>
+              <button data-load="boss">Boss</button>
             </div>
 
-            <div class="stat-row compact">
-              <span class="stat-label">Hebdo</span>
-              <span class="stat-value"><span id="weekXp"></span>/<span id="weekGoal"></span> XP</span>
+            <div class="stat-row">
+              <span class="stat-label">Progression</span>
+              <span class="stat-value">
+                <span id="weekXp"></span>/<span id="weekGoal"></span> XP
+              </span>
             </div>
 
             <div class="progress-bar">
@@ -96,12 +101,15 @@
             </div>
           </div>
 
+          <!-- ================= MENSUEL ================= -->
           <div class="subsection">
             <h4>Mensuel</h4>
 
-            <div class="stat-row compact">
-              <span class="stat-label">Mensuel</span>
-              <span class="stat-value"><span id="monthXp"></span>/<span id="monthGoal"></span> XP</span>
+            <div class="stat-row">
+              <span class="stat-label">Progression</span>
+              <span class="stat-value">
+                <span id="monthXp"></span>/<span id="monthGoal"></span> XP
+              </span>
             </div>
 
             <div class="progress-bar">
@@ -109,7 +117,11 @@
             </div>
           </div>
 
-          <button id="openPerformanceBtn" class="ghost btn-block">🏃🏽‍♀️‍➡️ Performances passées</button>
+          <!-- ================= BOUTON FIXE ================= -->
+          <button id="openPerformanceBtn" class="ghost btn-block">
+            🏃🏽‍♀️ Performances passées
+          </button>
+
         </div>
       </div>
 
@@ -123,15 +135,18 @@
 
         <div id="addWorldModal" class="modal hidden" role="dialog" aria-modal="true" aria-hidden="true">
           <div class="modal-content card">
-            <h3>Créer un monde</h3>
+            <h3>Ajouter un monde</h3>
 
             <label>Nom du monde</label>
             <input id="worldNameInput" placeholder="Ex : Sport" />
 
-            <label>Icône (emoji)</label>
+            <label>Icône</label>
             <input id="worldIconInput" placeholder="Ex : 🏃" />
 
             <label>Règle XP</label>
+            <p class="input-hint">
+              Par défaut 1XP = 1mn
+            </p>
             <div class="inline">
               <input id="minutesBaseInput" type="number" min="1" inputmode="numeric" placeholder="Minutes" />
               <span>=</span>
@@ -139,7 +154,7 @@
             </div>
 
             <div class="actions">
-              <button id="createWorldBtn" class="primary">Créer</button>
+              <button id="createWorldBtn" class="primary">Ajouter</button>
               <button id="cancelWorldBtn" class="ghost" type="button">Annuler</button>
             </div>
           </div>
@@ -163,22 +178,22 @@
 
       <div id="worldStats" class="tab-panel">
         <div class="card">
-          <h3>Stats</h3>
-          <p><strong>Niveau du monde</strong> <span id="worldLevel"></span></p>
-          <p><strong>XP semaine</strong> <span id="worldWeekXp"></span></p>
+          <h3>Statistiques du monde</h3>
+          <p><strong>Niveau</strong> <span id="worldLevel"></span></p>
           <p><strong>XP totale</strong> <span id="worldTotalXp"></span></p>
-          <p><strong>Règle XP</strong> <span id="worldRuleText"></span></p>
           <div class="stat-row">
-            <span class="stat-label"><strong>Temps total</strong></span>
+            <span class="stat-label"><strong>Temps</strong></span>
             <span class="stat-value" id="worldTotalTime">00h00mn</span>
           </div>
+          <p><strong>XP de la semaine</strong> <span id="worldWeekXp"></span></p>
+          <p><strong>Règle XP</strong> <span id="worldRuleText"></span></p>
         </div>
       </div>
 
 
       <div id="worldInput" class="tab-panel hidden">
         <div class="card">
-          <h3>Saisir du temps</h3>
+          <h3>Saisir un temps</h3>
           <input id="timeMinutesInput" type="number" min="1" inputmode="numeric" placeholder="Minutes (ex : 45)" />
           <button class="primary btn-block" id="validateTimeBtn">Valider</button>
           <p class="hint" id="timePreview"></p>
@@ -187,96 +202,101 @@
         <div class="card">
           <h3>Historique des saisies</h3>
           <div id="entriesList"></div>
-          <p class="hint">Suppression possible uniquement pendant 24h.</p>
+          <p class="hint">Suppression possible uniquement dans les 24h</p>
         </div>
       </div>
       <div id="worldObjectives" class="tab-panel hidden">
         <div class="card">
-          <h3>Objectifs</h3>
+          <h3>Objectifs du monde</h3>
           <div id="objectivesList"></div>
         </div>
 
         <div class="card">
           <h3>Ajouter un objectif</h3>
 
-          <label>Type</label>
+          <label>Type de quête</label>
+          <p class="hint">🎖️ Exploit: Objectif unique. Une fois accompli il est archivé</p>
+          <p class="hint">🔮 Rituel: Objectif réalisable à l'infini</p>
+          <p class="hint">🧗🏼 Ascension: Objectifs par palier. Une fois un palier atteint, le suivant apparaît</p>
           <select id="objectiveTypeSelect">
-            <option value="repeatable">🔁 Répétable</option>
-            <option value="milestone">📈 Palier</option>
-            <option value="unique">⭐ Unique</option>
+            <option value="unique">🎖️​ Exploit</option>
+            <option value="repeatable">🔮​ Rituel</option>
+            <option value="milestone">🧗🏼​ Ascension</option>
           </select>
 
           <div id="objectiveFieldsRepeatable">
             <label>Nom</label>
             <input id="objNameInput" placeholder="Ex : Aller courir" />
-            <label>Récompense (XP)</label>
+            <label>Récompense associée (XP)</label>
             <input id="objXpInput" type="number" min="1" inputmode="numeric" placeholder="Ex : 20" />
           </div>
 
           <div id="objectiveFieldsUnique" class="hidden">
             <label>Nom</label>
             <input id="objNameUniqueInput" placeholder="Ex : Finir un marathon" />
-            <label>Récompense (XP)</label>
+            <label>Récompense associée (XP)</label>
             <input id="objXpUniqueInput" type="number" min="1" inputmode="numeric" placeholder="Ex : 200" />
           </div>
 
           <div id="objectiveFieldsMilestone" class="hidden">
-            <label>Texte (2 parties)</label>
+            <label>Nom (en 2 parties)</label>
             <div class="inline">
               <input id="milestonePrefixInput" placeholder="Ex : Lire" />
-              <input id="milestoneSuffixInput" placeholder="Ex : livres" />
+              <input id="milestoneSuffixInput" placeholder="livres" />
             </div>
 
             <div class="card subtle">
-              <p class="hint">Ajoute tes paliers dans l’ordre (ex : 1 puis 5 puis 10). Le prochain palier apparaîtra automatiquement.</p>
+              <p class="hint">Ajoute les paliers à atteindre dans l’ordre (ex : 1 puis 5 puis 10).</p>
               <div class="inline">
-                <input id="milestoneCountInput" type="number" min="1" inputmode="numeric" placeholder="Palier (ex : 1)" />
-                <input id="milestoneXpInput" type="number" min="1" inputmode="numeric" placeholder="XP (ex : 10)" />
+                <input id="milestoneCountInput" type="number" min="1" inputmode="numeric" placeholder="Palier" />
+                <input id="milestoneXpInput" type="number" min="1" inputmode="numeric" placeholder="XP récompense" />
               </div>
               <button id="addMilestoneStepBtn" class="ghost">➕ Ajouter palier</button>
               <div id="milestoneStepsPreview" class="steps-preview"></div>
             </div>
 
-            <button id="createMilestoneObjectiveBtn" class="primary btn-block">Créer l’objectif palier</button>
+            <button id="createMilestoneObjectiveBtn" class="primary btn-block">Ajouter l’objectif palier</button>
           </div>
 
-          <button class="primary btn-block" id="createObjectiveBtn">Ajouter</button>
+          <button class="primary btn-block" id="createObjectiveBtn">Ajouter l'objectif</button>
         </div>
         <!-- MODAL: Modifier objectif -->
         <div id="editObjectiveModal" class="modal hidden" role="dialog" aria-modal="true" aria-hidden="true">
           <div class="modal-content card">
             <h3 id="editObjectiveTitle">Modifier l’objectif</h3>
             <div id="editObjectiveInfo" class="hint" style="margin-bottom:10px;"></div>
-            <label>Type</label>
-            <select id="editObjectiveTypeSelect">
-              <option value="repeatable">🔁 Répétable</option>
-              <option value="milestone">📈 Palier</option>
-              <option value="unique">⭐ Unique</option>
+            <label>Type de quête</label>
+            <p class="hint">🎖️ Exploit: Objectif unique. Une fois accompli il est archivé</p>
+            <p class="hint">🔮 Rituel: Objectif réalisable à l'infini</p>
+            <p class="hint">🧗🏼 Ascension: Objectifs par palier. Une fois un palier atteint, le suivant apparaît</p>
+            <select id="objectiveTypeSelect">
+              <option value="unique">🎖️​ Exploit</option>
+              <option value="repeatable">🔮​ Rituel</option>
+              <option value="milestone">🧗🏼​ Ascension</option>
             </select>
-
             <div id="editObjectiveFieldsRepeatable">
               <label>Nom</label>
               <input id="editObjNameInput" placeholder="Ex : Aller courir" />
-              <label>Récompense (XP)</label>
+              <label>Récompense associée (XP)</label>
               <input id="editObjXpInput" type="number" min="1" inputmode="numeric" placeholder="Ex : 20" />
             </div>
 
             <div id="editObjectiveFieldsUnique" class="hidden">
               <label>Nom</label>
               <input id="editObjNameUniqueInput" placeholder="Ex : Finir un marathon" />
-              <label>Récompense (XP)</label>
+              <label>Récompense associée (XP)</label>
               <input id="editObjXpUniqueInput" type="number" min="1" inputmode="numeric" placeholder="Ex : 200" />
             </div>
 
             <div id="editObjectiveFieldsMilestone" class="hidden">
-              <label>Texte (2 parties)</label>
+              <label>Nom (en 2 parties)</label>
               <div class="inline">
                 <input id="editMilestonePrefixInput" placeholder="Ex : Lire" />
                 <input id="editMilestoneSuffixInput" placeholder="Ex : livres" />
               </div>
 
               <div class="card subtle">
-                <p class="hint">Modifie les paliers : tu peux vider puis re-ajouter si besoin.</p>
+                <p class="hint">Les paliers précédemment créés ne sont pas modifiables</p>
                 <div class="inline">
                   <input id="editMilestoneCountInput" type="number" min="1" inputmode="numeric" placeholder="Palier (ex : 1)" />
                   <input id="editMilestoneXpInput" type="number" min="1" inputmode="numeric" placeholder="XP (ex : 10)" />
@@ -285,14 +305,14 @@
                 <div id="editMilestoneStepsPreview" class="steps-preview"></div>
               </div>
 
-              <button id="editSaveMilestoneBtn" class="primary btn-block">Enregistrer l’objectif palier</button>
+              <button id="editSaveMilestoneBtn" class="primary btn-block">Modifier l’objectif palier</button>
             </div>
             <div class="actions">
-              <button id="editSaveObjectiveBtn" class="primary">Enregistrer</button>
+              <button id="editSaveObjectiveBtn" class="primary">Modifier l'objectif</button>
               <button id="editCancelObjectiveBtn" class="ghost" type="button">Annuler</button>
             </div>
             <button id="editDeleteObjectiveBtn" class="danger-btn btn-block" type="button">
-              🗑️ Supprimer l’objectif
+              ❌​ Supprimer l’objectif
             </button>
           </div>
         </div>
@@ -315,14 +335,14 @@
 
       <div id="perfWeek" class="tab-panel">
         <div class="card">
-          <h3>Historique (Semaine)</h3>
+          <h3>Historique</h3>
           <div id="perfWeekList"></div>
         </div>
       </div>
 
       <div id="perfMonth" class="tab-panel hidden">
         <div class="card">
-          <h3>Historique (Mois)</h3>
+          <h3>Historique</h3>
           <div id="perfMonthList"></div>
         </div>
       </div>
@@ -347,25 +367,30 @@
 
       <div class="card">
         <h3>Objectifs</h3>
-        <label>Objectif mensuel (XP)</label>
-        <input id="monthGoalInput" type="number" min="1" inputmode="numeric" />
-
         <label>Objectifs hebdo (XP)</label>
         <div class="grid-3">
           <div>
-            <div class="hint">Semaine chargée</div>
-            <input id="weekGoalBusyInput" type="number" min="1" inputmode="numeric" />
+            <div class="hint">Mode Chill</div>
+            <input id="weekGoalChillInput" type="number" min="1" inputmode="numeric" />
           </div>
           <div>
-            <div class="hint">Semaine normale</div>
-            <input id="weekGoalNormalInput" type="number" min="1" inputmode="numeric" />
+            <div class="hint">Mode Focus</div>
+            <input id="weekGoalFocusInput" type="number" min="1" inputmode="numeric" />
           </div>
           <div>
-            <div class="hint">Semaine légère</div>
-            <input id="weekGoalLightInput" type="number" min="1" inputmode="numeric" />
+            <div class="hint">Mode Boss</div>
+            <input id="weekGoalBossInput" type="number" min="1" inputmode="numeric" />
           </div>
         </div>
-        <button class="primary btn-block" id="saveGoalsBtn">Enregistrer</button>
+
+        <label>Objectif mensuel (XP)</label>
+        <input id="monthGoalInput" type="number" min="1" inputmode="numeric" />
+
+        <div class="actions">
+          <button class="primary" id="saveGoalsBtn">Modifier</button>
+          <button type="button" class="ghost" id="resetGoalsBtn">Par défaut</button>
+        </div>
+
       </div>
 
       <div class="card">
@@ -383,8 +408,8 @@
       </div>
 
       <div class="card danger">
-        <h3>Réinitialiser</h3>
-        <p class="hint">Supprime toutes les données (pseudo, mondes, XP…).</p>
+        <h3>Réinitialiser le jeu</h3>
+        <p class="hint">Cela entraîne la suppression de toutes tes données.</p>
         <button id="resetGameBtn" class="btn-block danger-btn">👾 Réinitialiser le jeu</button>
       </div>
     </section>
@@ -400,7 +425,7 @@
       <div class="celebration-emoji" id="celebrationEmoji">🎉</div>
       <h2 id="celebrationTitle">Objectif atteint !</h2>
       <p class="hint" id="celebrationMsg">Bravo 👑</p>
-      <button id="celebrationOkBtn" class="btn-block">Trop bien ✨</button>
+      <button id="celebrationOkBtn" class="btn-block">Trop bien 🌈✨</button>
     </div>
   </div>
 

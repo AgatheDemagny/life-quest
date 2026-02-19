@@ -192,6 +192,13 @@ input:focus, select:focus{
 
 ::placeholder{ color: rgba(255,255,255,0.55); }
 
+.input-hint {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin-bottom: 8px;
+  margin-top: -4px;
+}
+
 /* ================== TOPBAR + BANNIÈRE ================== */
 .topbar{
   display: flex;
@@ -307,7 +314,7 @@ input:focus, select:focus{
   background: var(--progress-bg);
   border-radius: 999px;
   border: 1px solid rgba(242,214,179,0.10);
-  height: 18px;            /* ✅ plus épais */
+  height: 20px;            /* ✅ plus épais */
   overflow: hidden;
   width: 100%;
 }
@@ -454,6 +461,17 @@ input:focus, select:focus{
 .modal-content{
   width:100%;
   max-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-content label {
+  font-weight: 600;
+}
+
+.modal-content input {
+  width: 100%;
 }
 
 /* ✅ modals moins sombres, cohérentes avec les cards */
@@ -601,6 +619,32 @@ input:focus, select:focus{
   opacity: 0.35;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+.obj-icon-inline{
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 4px;
+  font-size: 18px;
+  cursor: pointer;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+  transition: transform .08s ease, opacity .15s ease;
+}
+
+.obj-icon-inline:hover{
+  background: rgba(255,255,255,0.06);
+}
+
+.obj-icon-inline:active{
+  transform: translateY(1px);
+}
+
+.obj-icon-inline:disabled{
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 /* ================== DANGER ================== */
