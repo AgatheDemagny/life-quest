@@ -34,10 +34,10 @@ function defaultData() {
 
     settings: {
       weekLoad: "focus",
-      weekGoals: { chill: 200, focus: 400, boss: 600 },
-      monthGoal: 1600,
-      levelBase: 120,
-      levelGrowth: 1.18
+      weekGoals: { chill: 120, focus: 240, boss: 360 },
+      monthGoal: 1000,
+      levelBase: 50,
+      levelGrowth: 1.008195
     },
 
     periods: {
@@ -142,7 +142,7 @@ function load() {
   if (data.periods.weekKey !== wk) {
     const oldKey = data.periods.weekKey;
     const oldXp = data.global.weekXp ?? 0;
-    const oldGoal = (data.settings?.weekGoals?.[data.settings?.weekLoad] ?? 400);
+    const oldGoal = (data.settings?.weekGoals?.[data.settings?.weekLoad] ?? 240);
     if (oldKey) data.history.weeks[oldKey] = { xp: oldXp, goal: oldGoal };
 
     data.periods.weekKey = wk;
@@ -154,7 +154,7 @@ function load() {
   if (data.periods.monthKey !== mk) {
     const oldKey = data.periods.monthKey;
     const oldXp = data.global.monthXp ?? 0;
-    const oldGoal = Number(data.settings?.monthGoal) || 1600;
+    const oldGoal = Number(data.settings?.monthGoal) || 1000;
     if (oldKey) data.history.months[oldKey] = { xp: oldXp, goal: oldGoal };
 
     data.periods.monthKey = mk;
@@ -622,10 +622,10 @@ function levelsGained(prevXp, newXp, base, growth) {
 // ================== Core rules ==================
 function getWeekGoal() {
   const load = state.settings.weekLoad || "focus";
-  return state.settings.weekGoals?.[load] ?? 400;
+  return state.settings.weekGoals?.[load] ?? 240;
 }
 function getMonthGoal() {
-  return Number(state.settings.monthGoal) || 1600;
+  return Number(state.settings.monthGoal) || 1000;
 }
 function calculateTimeXp(world, minutes) {
   const m = Number(world.rules.minutesBase) || 30;
