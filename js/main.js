@@ -305,6 +305,14 @@ const editSaveMilestoneBtn = el("editSaveMilestoneBtn");
 const editCancelObjectiveBtn = el("editCancelObjectiveBtn");
 const editObjectiveInfo = el("editObjectiveInfo");
 
+const openPastTimeBtn = el("openPastTimeBtn");
+const pastTimeBox = el("pastTimeBox");
+const pastMinutesInput = el("pastMinutesInput");
+const pastDateInput = el("pastDateInput");
+const pastTimeInput = el("pastTimeInput");
+const savePastTimeBtn = el("savePastTimeBtn");
+const cancelPastTimeBtn = el("cancelPastTimeBtn");
+
 // popup
 const popupEl = el("popup");
 
@@ -637,6 +645,54 @@ function getGlobalTotalMinutes() {
   return Object.values(state.worlds || {})
     .filter(w => w)
     .reduce((sum, w) => sum + (w?.stats?.timeTotal || 0), 0);
+}
+
+function isInCurrentWeek(ts){
+  return getISOWeekKey(new Date(ts)) === state.periods.weekKey;
+}
+function isInCurrentMonth(ts){
+  return getMonthKey(new Date(ts)) === state.periods.monthKey;
+}
+
+function addXpAt(worldId, xp, ts, reasonText){
+  const w = state.worlds[worldId];
+  if (!w) return;
+
+  const prevGlobalXp = state.global.totalXp;
+  const prevWorldXp = w.stats.totalXp;
+
+  // total toujours
+  state.global.totalXp += xp;
+  w.stats.totalXp += xp;
+
+  // week/month seulement si la date est dans la période courante
+  if (isInCurrentWeek(ts)) {
+    state.global.weekXp += xp;
+    w.stats.weekXp += xp;
+  }
+  if (isInCurrentMonth(ts)) {
+    state.global.monthXp += xp;
+    w.stats.monthXp += xp;
+  }
+
+  save();
+  showPopup(`${reasonText} +${xp} XP`);
+
+  // levels (inchangé)
+  const { prev: gPrev, now: gNow } = levelsGained(
+    prevGlobalXp, state.global.totalXp,
+    state.settings.levelBase, state.settings.levelGrowth
+  );
+  if (gNow > gPrev) showPopup(`⭐ Niveau global ${gNow} atteint !`);
+
+  const { prev: wPrev, now: wNow } = levelsGained(
+    prevWorldXp, w.stats.totalXp,
+    state.settings.levelBase, state.settings.levelGrowth
+  );
+  if (wNow > wPrev) showPopup(`🏰​​ Niveau ${wNow} atteint dans ${w.icon} ${w.name} !`);
+
+  renderHomeStats();
+  renderWorldStats();
 }
 
 function addXp(worldId, xp, reasonText) {
@@ -1534,12 +1590,16 @@ async function deleteEntry(entryId) {
   w.stats.timeTotal = Math.max(0, (w.stats.timeTotal || 0) - entry.minutes);
 
   w.stats.totalXp = Math.max(0, (w.stats.totalXp || 0) - entry.xp);
-  w.stats.weekXp = Math.max(0, (w.stats.weekXp || 0) - entry.xp);
-  w.stats.monthXp = Math.max(0, (w.stats.monthXp || 0) - entry.xp);
-
   state.global.totalXp = Math.max(0, (state.global.totalXp || 0) - entry.xp);
-  state.global.weekXp = Math.max(0, (state.global.weekXp || 0) - entry.xp);
-  state.global.monthXp = Math.max(0, (state.global.monthXp || 0) - entry.xp);
+  
+  if (isInCurrentWeek(entry.createdAt)) {
+    w.stats.weekXp = Math.max(0, (w.stats.weekXp || 0) - entry.xp);
+    state.global.weekXp = Math.max(0, (state.global.weekXp || 0) - entry.xp);
+  }
+  if (isInCurrentMonth(entry.createdAt)) {
+    w.stats.monthXp = Math.max(0, (w.stats.monthXp || 0) - entry.xp);
+    state.global.monthXp = Math.max(0, (state.global.monthXp || 0) - entry.xp);
+  }
 
   save();
   showPopup(`❌ Saisie supprimée (-${entry.xp} XP)`);
@@ -1678,9 +1738,70 @@ if (validateTimeBtn) validateTimeBtn.onclick = () => {
   w.stats.timeTotal = (w.stats.timeTotal || 0) + minutes;
   save();
 
-  addXp(w.id, xp, "⏱️ Temps ajouté !");
+  addXpAt(w.id, xp, Date.now(), "⏱️ Temps ajouté !");
   if (timeMinutesInput) timeMinutesInput.value = "";
   if (timePreviewEl) timePreviewEl.innerText = "";
+};
+function openPastTimeBox(){
+  if (!pastTimeBox) return;
+  pastTimeBox.classList.remove("hidden");
+
+  // valeurs par défaut
+  const now = new Date();
+  if (pastDateInput) pastDateInput.value = now.toISOString().slice(0,10);
+  if (pastTimeInput) pastTimeInput.value = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+  if (pastMinutesInput) pastMinutesInput.value = "";
+}
+
+function closePastTimeBox(){
+  if (!pastTimeBox) return;
+  pastTimeBox.classList.add("hidden");
+}
+
+if (openPastTimeBtn) openPastTimeBtn.onclick = () => {
+  if (!pastTimeBox) return;
+  const hidden = pastTimeBox.classList.contains("hidden");
+  if (hidden) openPastTimeBox();
+  else closePastTimeBox();
+};
+
+if (cancelPastTimeBtn) cancelPastTimeBtn.onclick = (e) => {
+  e.preventDefault();
+  closePastTimeBox();
+};
+
+if (savePastTimeBtn) savePastTimeBtn.onclick = () => {
+  const w = state.worlds[state.activeWorldId];
+  if (!w) return;
+
+  const minutes = parseInt(pastMinutesInput?.value || "", 10);
+  if (!Number.isFinite(minutes) || minutes <= 0) return uiAlert("Minutes invalides", "Temps passé");
+
+  const dateStr = (pastDateInput?.value || "").trim();
+  const timeStr = (pastTimeInput?.value || "").trim(); // "HH:MM"
+  if (!dateStr) return uiAlert("Date requise", "Temps passé");
+  if (!timeStr) return uiAlert("Heure requise", "Temps passé");
+
+  const ts = new Date(`${dateStr}T${timeStr}:00`).getTime();
+  if (!Number.isFinite(ts)) return uiAlert("Date/heure invalide", "Temps passé");
+  if (ts > Date.now()) return uiAlert("Tu ne peux pas saisir un temps dans le futur.", "Temps passé");
+
+  const xp = calculateTimeXp(w, minutes);
+
+  if (!Array.isArray(w.entries)) w.entries = [];
+  const entry = { id: "entry-" + Date.now(), createdAt: ts, minutes, xp };
+
+  // insert + tri : affichage au bon endroit dans l'historique
+  w.entries.push(entry);
+  w.entries.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+  w.stats.timeTotal = (w.stats.timeTotal || 0) + minutes;
+  save();
+
+  addXpAt(w.id, xp, ts, "🕰️ Temps passé ajouté !");
+  renderEntries();
+
+  closePastTimeBox();
 };
 
 // ================== Objectives create / validate ==================

@@ -197,7 +197,25 @@
         <div class="card">
           <h3>Saisir un temps</h3>
           <input id="timeMinutesInput" type="number" min="1" inputmode="numeric" placeholder="Minutes (ex : 45)" />
-          <button class="primary btn-block" id="validateTimeBtn">Valider</button>
+          <button class="primary btn-block" id="validateTimeBtn">Saisir</button>
+          <button class="ghost btn-block" id="openPastTimeBtn">🕰️ Saisir un temps passé</button>
+          <div id="pastTimeBox" class="card subtle form-card hidden">
+            <label>Temps (minutes)</label>
+            <input id="pastMinutesInput" type="number" min="1" inputmode="numeric" placeholder="Minutes (ex : 45)" />
+
+            <label>Date</label>
+            <input id="pastDateInput" type="date" />
+
+            <label>Heure</label>
+            <input id="pastTimeInput" type="time" step="60" />
+
+            <div class="inline">
+              <button class="primary btn-block" id="savePastTimeBtn">Ajouter ce temps</button>
+              <button class="ghost btn-block" id="cancelPastTimeBtn" type="button">Annuler</button>
+            </div>
+
+            <p class="hint">La saisie sera ajoutée à l’historique à la bonne date.</p>
+          </div>
           <p class="hint" id="timePreview"></p>
         </div>
 
