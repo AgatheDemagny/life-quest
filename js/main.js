@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const v = document.getElementById("appVersion");
-  if (v) v.textContent = "V1 - 19/02/2026";
+  if (v) v.textContent = "V1 - 21/02/2026";
 });
 
 // ================== Storage helpers ==================
@@ -340,7 +340,7 @@ function showPopup(text) {
   clearTimeout(showPopup._t);
   showPopup._t = setTimeout(() => {
     popupEl.style.display = "none";
-  }, 1600);
+  }, 4600);
 }
 
 function clamp01(x){ return Math.max(0, Math.min(1, x)); }
@@ -509,6 +509,7 @@ function forceOpenAddWorldModal() {
 }
 
 let editDraftMilestoneSteps = [];
+let editMilestoneEditIndex = null;
 
 function openEditObjectiveModal(){
   if (!editObjectiveModal) return;
@@ -523,6 +524,8 @@ function closeEditObjectiveModal(){
   editObjectiveModal.style.display = "none";
   editObjectiveModal.setAttribute("aria-hidden", "true");
   editingObjectiveId = null;
+  editMilestoneEditIndex = null;
+  if (editAddMilestoneStepBtn) editAddMilestoneStepBtn.innerText = "Ajouter palier";
   editDraftMilestoneSteps = [];
   renderEditMilestonePreview();
   if (editObjectiveInfo) editObjectiveInfo.textContent = "";
@@ -542,12 +545,36 @@ function refreshEditObjectiveTypeUI(){
 function renderEditMilestonePreview(){
   if (!editMilestoneStepsPreview) return;
   editMilestoneStepsPreview.innerHTML = "";
-  editDraftMilestoneSteps.forEach(s => {
-    const pill = document.createElement("div");
-    pill.className = "step-pill";
-    pill.innerText = `${s.count} → ${s.xp} XP`;
-    editMilestoneStepsPreview.appendChild(pill);
-  });
+
+  editDraftMilestoneSteps
+    .slice()
+    .sort((a,b) => Number(a.count) - Number(b.count))
+    .forEach((s, i) => {
+      const pill = document.createElement("div");
+      pill.className = "step-pill";
+      pill.innerText = `${s.count} → ${s.xp} XP`;
+
+      // rendre cliquable
+      pill.style.cursor = "pointer";
+
+      // highlight si sélectionné
+      if (editMilestoneEditIndex === i) {
+        pill.classList.add("active");
+      }
+
+      pill.onclick = () => {
+        // on passe en mode édition de ce palier
+        editMilestoneEditIndex = i;
+
+        if (editMilestoneCountInput) editMilestoneCountInput.value = s.count;
+        if (editMilestoneXpInput) editMilestoneXpInput.value = s.xp;
+
+        if (editAddMilestoneStepBtn) editAddMilestoneStepBtn.innerText = "Modifier ce palier";
+        renderEditMilestonePreview();
+      };
+
+      editMilestoneStepsPreview.appendChild(pill);
+    });
 }
 
 if (editObjectiveTypeSelect) editObjectiveTypeSelect.onchange = refreshEditObjectiveTypeUI;
@@ -1297,7 +1324,8 @@ function startEditObjective(obj){
   if (editMilestoneSuffixInput) editMilestoneSuffixInput.value = "";
   editDraftMilestoneSteps = [];
   renderEditMilestonePreview();
-
+  editMilestoneEditIndex = null;
+  if (editAddMilestoneStepBtn) editAddMilestoneStepBtn.innerText = "Ajouter palier";
   // pré-remplir selon type
   if (obj.type === "repeatable") {
     if (editObjNameInput) { editObjNameInput.value = obj.name || ""; editObjNameInput.disabled = true; }
@@ -1326,7 +1354,7 @@ function startEditObjective(obj){
       editObjectiveInfo.textContent = `Seule la récompense associée peut être modifiée`;
     } else if (obj.type === "milestone") {
       editObjectiveInfo.textContent =
-        `Non modifiable : Texte = "Seul l'ajout de nouveaux paliers est possible`;
+        `Non modifiable : Texte = "Seul l'ajout de nouveaux paliers et la modification de paliers non atteints est possible`;
     } else {
       editObjectiveInfo.textContent = "";
     }
@@ -1884,18 +1912,27 @@ if (editAddMilestoneStepBtn) editAddMilestoneStepBtn.onclick = async () => {
   if (!Number.isFinite(count) || count <= 0) return uiAlert("Palier invalide", "Modifier objectif");
   if (!Number.isFinite(xp) || xp <= 0) return uiAlert("XP invalide", "Modifier objectif");
 
-  // empêcher doublons
-  if (editDraftMilestoneSteps.some(s => Number(s.count) === count)) {
-    return uiAlert("Ce palier existe déjà dans la liste.", "Modifier objectif");
+  // Si on MODIFIE un palier existant
+  if (editMilestoneEditIndex !== null) {
+    // empêcher doublon de count avec un autre palier (hors celui modifié)
+    const dup = editDraftMilestoneSteps.some((s, idx) => idx !== editMilestoneEditIndex && Number(s.count) === count);
+    if (dup) return uiAlert("Un autre palier a déjà ce nombre.", "Modifier objectif");
+
+    editDraftMilestoneSteps[editMilestoneEditIndex] = { count, xp, done: false };
+
+    // reset mode édition
+    editMilestoneEditIndex = null;
+    if (editAddMilestoneStepBtn) editAddMilestoneStepBtn.innerText = "Ajouter palier";
+  } else {
+    // Sinon, AJOUT classique
+    if (editDraftMilestoneSteps.some(s => Number(s.count) === count)) {
+      return uiAlert("Ce palier existe déjà dans la liste.", "Modifier objectif");
+    }
+    editDraftMilestoneSteps.push({ count, xp, done:false });
   }
 
-  // strictement croissant (par rapport AU DERNIER ajouté dans la draft)
-  const last = editDraftMilestoneSteps[editDraftMilestoneSteps.length - 1];
-  if (last && count <= Number(last.count || 0)) {
-    return uiAlert(`Les paliers saisis doivent être dans l'ordre croissant !`, "Modifier objectif");
-  }
-
-  editDraftMilestoneSteps.push({ count, xp, done:false });
+  // garder trié
+  editDraftMilestoneSteps.sort((a,b) => Number(a.count) - Number(b.count));
 
   if (editMilestoneCountInput) editMilestoneCountInput.value = "";
   if (editMilestoneXpInput) editMilestoneXpInput.value = "";

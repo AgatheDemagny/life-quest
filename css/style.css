@@ -523,6 +523,21 @@ input:focus, select:focus{
   font-weight: 800;
 }
 
+.step-pill {
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.step-pill.active {
+  border: 2px solid #f97316; /* orange doux */
+  background: rgba(249, 115, 22, 0.15);
+  transform: scale(1.05);
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.6);
+}
 /* badges/pills */
 .badge, .step-pill{
   font-size:12px;
