@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const v = document.getElementById("appVersion");
-  if (v) v.textContent = "V1 - 21/02/2026";
+  if (v) v.textContent = "V1 - 22/02/2026";
 });
 
 // ================== Storage helpers ==================
@@ -1481,7 +1481,7 @@ function renderEntries() {
     label.className = "label";
     label.innerHTML =
       `<strong>${formatDateTime(entry.createdAt)}</strong><br>` +
-      `<span class="hint">Temps saisi : ${entry.minutes} min • +${entry.xp} XP</span>`;
+      `<span class="hint">${entry.minutes} mn / +${entry.xp} XP</span>`;
 
     const del = document.createElement("button");
     del.className = "ghost";
@@ -1579,8 +1579,8 @@ async function deleteEntry(entryId) {
     await uiAlert("Tu ne peux supprimer une saisie qu’à moins de 24h.", "Suppression");
     return;
   }
-
-  const ok = await uiConfirm(`Es-tu sûr de vouloir supprimer cette saisie: ${entry.minutes} min - ${entry.xp} XP ?`, "Supprimer la saisie");
+  const when = formatDateTimeFR(entry.createdAt);
+  const ok = await uiConfirm(`Es-tu sûr de vouloir supprimer cette saisie : ${when} (${entry.minutes} mn / ${entry.xp} XP) ?`, "Supprimer la saisie");
   if (!ok) return;
 
   w.entries = w.entries.filter(e => e.id !== entryId);

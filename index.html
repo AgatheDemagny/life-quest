@@ -196,12 +196,12 @@
       <div id="worldInput" class="tab-panel hidden">
         <div class="card">
           <h3>Saisir un temps</h3>
-          <input id="timeMinutesInput" type="number" min="1" inputmode="numeric" placeholder="Minutes (ex : 45)" />
-          <button class="primary btn-block" id="validateTimeBtn">Ajouter</button>
+          <input id="timeMinutesInput" type="number" min="1" inputmode="numeric" placeholder="Ex : 60" />
+          <button class="primary btn-block" id="validateTimeBtn">Saisir</button>
           <button class="ghost btn-block" id="openPastTimeBtn">🕰️ Saisir un temps passé</button>
           <div id="pastTimeBox" class="card subtle form-card hidden">
             <label>Temps (minutes)</label>
-            <input id="pastMinutesInput" type="number" min="1" inputmode="numeric" placeholder="Minutes (ex : 45)" />
+            <input id="pastMinutesInput" type="number" min="1" inputmode="numeric" placeholder="Ex : 60" />
 
             <label>Date</label>
             <input id="pastDateInput" type="date" />
@@ -210,7 +210,7 @@
             <input id="pastTimeInput" type="time" step="60" />
 
             <div class="inline">
-              <button class="primary btn-block" id="savePastTimeBtn">Ajouter</button>
+              <button class="primary btn-block" id="savePastTimeBtn">Saisir</button>
               <button class="ghost btn-block" id="cancelPastTimeBtn" type="button">Annuler</button>
             </div>
           </div>
@@ -220,7 +220,6 @@
         <div class="card">
           <h3>Historique des saisies</h3>
           <div id="entriesList"></div>
-          <p class="hint">Suppression possible uniquement dans les 24h</p>
         </div>
       </div>
       <div id="worldObjectives" class="tab-panel hidden">
