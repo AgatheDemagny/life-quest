@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const v = document.getElementById("appVersion");
-  if (v) v.textContent = "V1 - 22/02/2026";
+  if (v) v.textContent = "V1 - 25/02/2026";
 });
 
 // ================== Storage helpers ==================
@@ -1574,12 +1574,8 @@ async function deleteEntry(entryId) {
 
   const entry = w.entries.find(e => e.id === entryId);
   if (!entry) return;
-
-  if (!canDeleteEntry(entry)) {
-    await uiAlert("Tu ne peux supprimer une saisie qu’à moins de 24h.", "Suppression");
-    return;
   }
-  const when = formatDateTimeFR(entry.createdAt);
+  const when = formatDateTime(entry.createdAt);
   const ok = await uiConfirm(`Es-tu sûr de vouloir supprimer cette saisie : ${when} (${entry.minutes} mn / ${entry.xp} XP) ?`, "Supprimer la saisie");
   if (!ok) return;
 
