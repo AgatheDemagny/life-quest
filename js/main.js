@@ -1574,8 +1574,9 @@ async function deleteEntry(entryId) {
 
   const entry = w.entries.find(e => e.id === entryId);
   if (!entry) return;
-  }
+
   const when = formatDateTime(entry.createdAt);
+  
   const ok = await uiConfirm(`Es-tu sûr de vouloir supprimer cette saisie : ${when} (${entry.minutes} mn / ${entry.xp} XP) ?`, "Supprimer la saisie");
   if (!ok) return;
 
