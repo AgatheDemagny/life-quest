@@ -1144,6 +1144,12 @@ function normalizeWorldObjectives(w){
   });
 }
 
+function formatMilestoneTitle(prefix, count, suffix) {
+  const left = (prefix || "").trim();
+  const right = (suffix || "").trim();
+  return [left, String(count), right].filter(Boolean).join(" ");
+}
+
 function getObjectiveIcon(type){
   if (type === "unique") return "🎖️";
   if (type === "repeatable") return "🔮";
@@ -1257,7 +1263,7 @@ function renderObjectives() {
         kind: "milestoneStep",
         id: `${o.id}-step-${s.count}`,
         icon: "🧗🏼",
-        title: `${(o.prefix || "").trim()} ${s.count} ${(o.suffix || "").trim()}`,
+        title: formatMilestoneTitle(o.prefix, s.count, o.suffix),
         xp: Number(s.xp || 0),
         ts: s.doneAt || null,
         undoable: (s.doneAt === lastTs) && canUndo(s.doneAt),
@@ -1329,7 +1335,7 @@ function renderInProgressRow(obj){
   if (obj.type === "milestone") {
     const next = getMilestoneNextStep(obj);
     const xp = next ? Number(next.xp || 0) : 0;
-    title.textContent = `${icon} ${(obj.prefix || "").trim()} 1 ${(obj.suffix || "").trim()}`;
+    title.textContent = `${icon} ${formatMilestoneTitle(obj.prefix, 1, obj.suffix)}`;
     xpLine.textContent = `${xp} XP`;
   }
 
@@ -1948,8 +1954,7 @@ if (createMilestoneObjectiveBtn) createMilestoneObjectiveBtn.onclick = async () 
 
   const prefix = (milestonePrefixInput?.value || "").trim();
   const suffix = (milestoneSuffixInput?.value || "").trim();
-  if (!prefix) return uiAlert("Partie 1 du nom requise", "Objectifs");
-  if (!suffix) return uiAlert("Partie 2 du nom requise", "Objectifs");
+  if (!prefix && !suffix) return uiAlert("Saisis au moins une partie du nom de l'objectif (gauche et/ou droite)", "Objectifs");
   if (draftMilestoneSteps.length === 0) return uiAlert("Ajoute au moins un palier pour pouvoir créer l'objectif", "Objectifs");
 
   obj.type = "milestone";
@@ -2181,8 +2186,7 @@ if (editSaveMilestoneBtn) editSaveMilestoneBtn.onclick = async () => {
   const prefix = (editMilestonePrefixInput?.value || "").trim();
   const suffix = (editMilestoneSuffixInput?.value || "").trim();
 
-  if (!prefix) return uiAlert("Texte 1 requis", "Modifier objectif");
-  if (!suffix) return uiAlert("Texte 2 requis", "Modifier objectif");
+  if (!prefix && !suffix) return uiAlert("Saisis au moins une partie du nom de l'objectif (gauche et/ou droite).", "Modifier objectif");
   if (editDraftMilestoneSteps.length === 0) return uiAlert("Ajoute au moins un palier pour pouvoir créer l'objectif", "Modifier objectif");
 
   obj.type = "milestone";
