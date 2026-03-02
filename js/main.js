@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const v = document.getElementById("appVersion");
-  if (v) v.textContent = "V1 - 26/02/2026";
+  if (v) v.textContent = "V1 - 02/03/2026";
 });
 
 // ================== Storage helpers ==================
@@ -56,6 +56,7 @@ function defaultData() {
       monthXp: 0
     },
 
+    worldOrder: [],
     worlds: {},
     activeWorldId: null
   };
@@ -109,7 +110,8 @@ function load() {
   if (!data.history) data.history = { weeks: {}, months: {} };
   if (!data.history.weeks) data.history.weeks = {};
   if (!data.history.months) data.history.months = {};
-  
+  if (!Array.isArray(data.worldOrder)) data.worldOrder = [];
+
   const validLoads = ["chill", "focus", "boss"];
   const mapOldLoad = { light: "chill", normal: "focus", busy: "boss", "chargée": "boss" };
   if (!validLoads.includes(data.settings.weekLoad)) {
@@ -927,11 +929,91 @@ function renderHomeStats() {
   }
 }
 
+function getOrderedActiveWorlds(){
+  const worlds = Object.values(state.worlds || {}).filter(w => w && w.active !== false);
+
+  // si aucun ordre enregistré, on garde l’ordre actuel
+  if (!Array.isArray(state.worldOrder) || state.worldOrder.length === 0) return worlds;
+
+  const byId = new Map(worlds.map(w => [w.id, w]));
+  const ordered = [];
+
+  // 1) ceux présents dans worldOrder
+  state.worldOrder.forEach(id => {
+    const w = byId.get(id);
+    if (w) ordered.push(w);
+  });
+
+  // 2) ceux nouveaux pas encore dans worldOrder
+  worlds.forEach(w => {
+    if (!state.worldOrder.includes(w.id)) ordered.push(w);
+  });
+
+  return ordered;
+}
+
+let _dragWorldId = null;
+
+function setupWorldDragAndDrop(){
+  if (!worldsListEl) return;
+
+  const items = worldsListEl.querySelectorAll(".world-btn");
+  items.forEach(btn => {
+    btn.draggable = true;
+
+    btn.ondragstart = (e) => {
+      _dragWorldId = btn.dataset.worldId;
+      btn.classList.add("dragging");
+      try { e.dataTransfer.setData("text/plain", _dragWorldId); } catch(_) {}
+      try { e.dataTransfer.effectAllowed = "move"; } catch(_) {}
+    };
+
+    btn.ondragend = () => {
+      btn.classList.remove("dragging");
+      _dragWorldId = null;
+      worldsListEl.querySelectorAll(".world-btn").forEach(x => x.classList.remove("drag-over"));
+    };
+
+    btn.ondragover = (e) => {
+      e.preventDefault();
+      btn.classList.add("drag-over");
+    };
+
+    btn.ondragleave = () => btn.classList.remove("drag-over");
+
+    btn.ondrop = (e) => {
+      e.preventDefault();
+      btn.classList.remove("drag-over");
+
+      const targetId = btn.dataset.worldId;
+      const sourceId = _dragWorldId || (e.dataTransfer ? e.dataTransfer.getData("text/plain") : null);
+      if (!sourceId || !targetId || sourceId === targetId) return;
+
+      applyWorldReorder(sourceId, targetId);
+    };
+  });
+}
+
+function applyWorldReorder(sourceId, targetId){
+  const orderedIds = getOrderedActiveWorlds().map(w => w.id);
+
+  const from = orderedIds.indexOf(sourceId);
+  const to = orderedIds.indexOf(targetId);
+  if (from === -1 || to === -1) return;
+
+  orderedIds.splice(from, 1);
+  orderedIds.splice(to, 0, sourceId);
+
+  state.worldOrder = orderedIds;
+  save();
+  renderWorlds();
+}
+
 function renderWorlds() {
   if (!worldsListEl) return;
   worldsListEl.innerHTML = "";
 
-  const activeWorlds = Object.values(state.worlds).filter(w => w && w.active !== false);
+  const activeWorlds = getOrderedActiveWorlds();
 
   if (activeWorlds.length === 0) {
     worldsListEl.innerHTML = `<p class="hint">Aucun monde créé pour l’instant.</p>`;
@@ -947,18 +1029,24 @@ function renderWorlds() {
     const hh = Math.floor(time / 60);
     const mm = time % 60;
 
+    btn.dataset.worldId = world.id;
     btn.innerHTML = `
-      <div class="world-title-row">
-        <div class="world-title">${world.icon} ${world.name}</div>
-      </div>
-      <div class="world-meta">
-        ${String(hh).padStart(2,"0")}h${String(mm).padStart(2,"0")} • ${xp} XP
+      <div class="world-row">
+        <div class="world-icon-big">${world.icon}</div>
+
+        <div class="world-right">
+          <div class="world-name">${world.name}</div>
+          <div class="world-stats">
+            ${String(hh).padStart(2,"0")}h${String(mm).padStart(2,"0")} • ${xp} XP
+          </div>
+        </div>
       </div>
     `;
 
     btn.onclick = () => openWorld(world.id);
     worldsListEl.appendChild(btn);
   });
+  setupWorldDragAndDrop();
 }
 
 
@@ -1666,6 +1754,8 @@ if (createWorldBtn) createWorldBtn.onclick = async () => {
     objectives: [],
     entries: []
   };
+  state.worldOrder = Array.isArray(state.worldOrder) ? state.worldOrder : [];
+  state.worldOrder.push(id);
 
   save();
   renderWorlds();
